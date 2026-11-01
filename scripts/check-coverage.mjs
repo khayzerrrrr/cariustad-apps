@@ -79,9 +79,13 @@ const CASES = [
   [
     "saya mau booking ustadz untuk kajian, Sabtu jam 19:00, di Medan, 80 orang",
     (r) =>
-      r.toLowerCase().includes("rencana booking") && r.toLowerCase().includes("medan")
+      (r.toLowerCase().includes("rencana booking") ||
+        // format baru: rekomendasi general + hyperlink halaman booking
+        (r.toLowerCase().includes("rekomendasikan") &&
+          r.includes("/booking?ustadz="))) &&
+      r.toLowerCase().includes("medan")
         ? null
-        : "rencana booking Medan tidak tersusun",
+        : "rekomendasi booking Medan (general + hyperlink) tidak muncul",
   ],
 ];
 
