@@ -432,6 +432,22 @@ export class VoiceEngine {
     return { name: voice?.name ?? null, lang: voice?.lang ?? null, isMale };
   }
 
+  /** Status lengkap TTS untuk tombol "Tes Suara" & pesan diagnostik */
+  getTTSStatus(): {
+    supported: boolean;
+    voicesCount: number;
+    voiceName: string | null;
+    isMale: boolean;
+  } {
+    const info = this.getVoiceInfo();
+    return {
+      supported: this.isSynthesisSupported,
+      voicesCount: this.voicesCache.length,
+      voiceName: info.name,
+      isMale: info.isMale,
+    };
+  }
+
   /** Cleanup */
   destroy() {
     this.stopListening();

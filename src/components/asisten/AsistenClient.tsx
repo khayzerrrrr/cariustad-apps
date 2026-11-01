@@ -49,6 +49,8 @@ export default function AsistenClient() {
   const [speakChar, setSpeakChar] = useState(-1);
   /** TTS tidak menghasilkan suara di browser ini (mis. Brave memblokir voice) */
   const [ttsBroken, setTtsBroken] = useState(false);
+  const [ttsTest, setTtsTest] = useState<"idle" | "testing" | "ok" | "fail">("idle");
+  const [ttsDetail, setTtsDetail] = useState<string | null>(null);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [injectionCount, setInjectionCount] = useState(0);
@@ -333,6 +335,34 @@ export default function AsistenClient() {
     }
   }, [isMuted, dispatch]);
 
+  /** Uji suara manual: bacakan kalimat pendek & laporkan hasilnya */
+  const handleTestVoice = useCallback(() => {
+    const ve = voiceEngineRef.current;
+    const status = ve.getTTSStatus();
+    setTtsTest("testing");
+    setTtsDetail(null);
+    ve.speak("Assalamualaikum, ini tes suara asisten Cari Ustadz.", {
+      onSpeakEnd: () => {
+        setTtsTest("ok");
+        setTtsDetail(
+          status.voiceName
+            ? `Suara aktif: ${status.voiceName}`
+            : `Suara default browser (${status.voicesCount} suara tersedia)`
+        );
+      },
+      onSpeakError: (reason) => {
+        setTtsTest("fail");
+        setTtsDetail(
+          status.voicesCount === 0
+            ? "Browser ini tidak punya SATU PUN suara TTS terpasang. Di Chrome Linux hal ini umum (butuh Speech Dispatcher). Solusi paling mudah: buka situs ini di Microsoft Edge — suara laki-laki Indonesia langsung tersedia."
+            : reason === "silent"
+              ? `Suara tidak diputar meski ${status.voicesCount} voice terdaftar (${status.voiceName ?? "?"}). Coba: (1) pastikan volume tidak bisu, (2) buka tab lain lalu kembali, (3) gunakan Microsoft Edge.`
+              : `TTS error: ${reason}`
+        );
+      },
+    });
+  }, []);
+
   const handleReset = useCallback(() => {
     setMessages([]);
     setInput("");
@@ -454,9 +484,11 @@ export default function AsistenClient() {
                   <VolumeX className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <p className="text-xs leading-relaxed text-amber-800">
                     Suara tidak dapat diputar di browser ini (teks tetap tampil di
-                    chat). Untuk demo dengan suara, gunakan{" "}
-                    <strong>Chrome</strong> atau <strong>Microsoft Edge</strong> —
-                    di Edge asisten berbicara dengan suara laki-laki Indonesia.
+                    chat). Paling sering: Chrome/Brave di Linux tanpa Speech
+                    Dispatcher. Solusi: buka di <strong>Microsoft Edge</strong>{" "}
+                    (suara laki-laki Indonesia &quot;Ardi&quot; langsung tersedia) atau
+                    Chrome di Windows/Mac. Klik <strong>Tes Suara</strong> di bawah
+                    avatar untuk diagnosis.
                   </p>
                   <button
                     onClick={() => setTtsBroken(false)}
@@ -501,6 +533,30 @@ export default function AsistenClient() {
                 onToggleMute={handleToggleMute}
                 onReset={handleReset}
               />
+
+              {/* Diagnostik suara */}
+              <div className="border-t border-emerald-50 px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleTestVoice}
+                    disabled={ttsTest === "testing"}
+                    className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 transition-colors"
+                  >
+                    {ttsTest === "testing" ? "Menguji…" : "🔊 Tes Suara"}
+                  </button>
+                  {ttsTest === "ok" && (
+                    <span className="text-xs text-emerald-600">✓ {ttsDetail}</span>
+                  )}
+                  {ttsTest === "fail" && (
+                    <span className="text-xs text-amber-700">✗ {ttsDetail}</span>
+                  )}
+                  {!ttsDetail && ttsTest === "idle" && (
+                    <span className="text-[11px] text-gray-400">
+                      Tidak ada suara? Klik untuk diagnosis
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Microphone permission help */}
