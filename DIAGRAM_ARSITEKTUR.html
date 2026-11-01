@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagram Arsitektur — CariUstadz</title>
+<style>
+  :root{
+    --ink:#0f172a; --ink-2:#334155; --muted:#64748b; --line:#cbd5e1;
+    --emerald:#047857; --emerald-2:#065f46; --emerald-bg:#ecfdf5; --emerald-line:#6ee7b7;
+    --teal:#0d9488;
+    --amber:#b45309; --amber-bg:#fffbeb; --amber-line:#fbbf24;
+    --red:#b91c1c; --red-bg:#fef2f2; --red-line:#f87171;
+    --blue:#1d4ed8; --blue-bg:#eff6ff; --blue-line:#93c5fd;
+    --slate-bg:#f8fafc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:#eef2f6; color:var(--ink);
+       font-family:"Segoe UI",Roboto,-apple-system,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px; line-height:1.5;}
+  .sheet{max-width:1120px; margin:0 auto; background:#fff; padding:44px 52px 56px;
+         box-shadow:0 1px 4px rgba(15,23,42,.1);}
+
+  header{border-bottom:3px solid var(--emerald); padding-bottom:16px; margin-bottom:26px;
+         display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap}
+  .kicker{font-size:11px; letter-spacing:.15em; text-transform:uppercase;
+          color:var(--emerald); font-weight:700; margin-bottom:7px}
+  h1{margin:0; font-size:26px; letter-spacing:-.02em; line-height:1.15}
+  .meta{font-size:11.5px; color:var(--muted); text-align:right; line-height:1.7}
+  .meta code{font-family:ui-monospace,Menlo,monospace; font-size:11px;
+             background:#f1f5f9; padding:1px 5px; border-radius:3px}
+
+  /* ---- zona ---- */
+  .zone{border:2px solid var(--line); border-radius:12px; padding:16px 18px 18px;
+        background:var(--slate-bg); position:relative}
+  .zone > .ztitle{position:absolute; top:-11px; left:16px; background:#fff;
+                  padding:0 9px; font-size:11.5px; font-weight:800;
+                  letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2)}
+  .zone.user{border-color:var(--blue-line); background:var(--blue-bg)}
+  .zone.user > .ztitle{color:var(--blue)}
+  .zone.agent{border-color:var(--emerald-line); background:#fff}
+  .zone.agent > .ztitle{color:var(--emerald-2)}
+  .zone.ext{border-color:#c4b5fd; background:#f5f3ff}
+  .zone.ext > .ztitle{color:#6d28d9}
+
+  /* ---- trust boundary ---- */
+  .tb{display:flex; align-items:center; gap:12px; margin:13px 0; padding:0 4px}
+  .tb .line{flex:1; height:0; border-top:2.5px dashed var(--red); position:relative}
+  .tb .line::before,.tb .line::after{content:""; position:absolute; top:-5px;
+        width:8px; height:8px; border-radius:50%; background:var(--red)}
+  .tb .line::before{left:0} .tb .line::after{right:0}
+  .tb .tag{font-size:10.5px; font-weight:800; letter-spacing:.08em; color:var(--red);
+           text-transform:uppercase; white-space:nowrap;
+           background:var(--red-bg); border:1.5px solid var(--red-line);
+           padding:3px 10px; border-radius:999px}
+  .tb .desc{font-size:11.5px; color:var(--red); font-style:italic; max-width:46%;
+            line-height:1.35}
+
+  /* ---- langkah ---- */
+  .steps{display:flex; flex-direction:column; gap:0}
+  .row{display:flex; align-items:stretch; gap:14px}
+  .step{flex:1; border:1.5px solid var(--line); border-radius:9px; padding:10px 14px;
+        background:#fff; display:flex; gap:12px; align-items:flex-start; min-height:52px}
+  .step .n{flex:0 0 26px; height:26px; border-radius:7px; background:var(--emerald);
+           color:#fff; font-size:12px; font-weight:800; display:flex;
+           align-items:center; justify-content:center; margin-top:1px}
+  .step .body{flex:1; min-width:0}
+  .step .t{font-weight:700; font-size:13.5px; color:var(--ink); line-height:1.35}
+  .step .d{font-size:11.8px; color:var(--muted); line-height:1.45; margin-top:2px}
+  .step .d code{font-family:ui-monospace,Menlo,monospace; font-size:11px;
+                background:#f1f5f9; padding:1px 4px; border-radius:3px; color:var(--ink-2)}
+
+  /* varian */
+  .step.guard{border-color:var(--red-line); background:var(--red-bg)}
+  .step.guard .n{background:var(--red)}
+  .step.decide{border-color:var(--amber-line); background:var(--amber-bg)}
+  .step.decide .n{background:var(--amber)}
+  .step.human{border:2.5px solid var(--amber); background:#fff7ed;
+              box-shadow:0 0 0 4px rgba(251,191,36,.16)}
+  .step.human .n{background:var(--amber)}
+  .step.data{border-color:var(--blue-line); background:var(--blue-bg)}
+  .step.data .n{background:var(--blue)}
+  .step.audit{border-color:#c4b5fd; background:#f5f3ff}
+  .step.audit .n{background:#6d28d9}
+
+  /* panah */
+  .arrow{display:flex; justify-content:center; padding:5px 0; color:var(--line)}
+  .arrow svg{display:block}
+
+  /* cabang tolak */
+  .row.with-out{position:relative}
+  .out{flex:0 0 210px; border-left:2px dashed var(--red); padding:10px 0 10px 16px;
+       display:flex; flex-direction:column; justify-content:center; gap:4px}
+  .out .res{font-size:11.5px; font-weight:800; color:var(--red);
+            font-family:ui-monospace,Menlo,monospace}
+  .out .why{font-size:11px; color:var(--muted); line-height:1.35}
+
+  /* ---- legenda ---- */
+  .legend{margin-top:26px; display:grid; grid-template-columns:repeat(2,1fr);
+          gap:10px 26px; border-top:1px solid var(--line); padding-top:18px}
+  .lg{display:flex; gap:9px; align-items:flex-start; font-size:12px; color:var(--ink-2)}
+  .sw{flex:0 0 15px; height:15px; border-radius:4px; margin-top:2px; border:1.5px solid}
+  .sw.a{background:var(--emerald-bg); border-color:var(--emerald-line)}
+  .sw.b{background:var(--red-bg); border-color:var(--red-line)}
+  .sw.c{background:var(--amber-bg); border-color:var(--amber-line)}
+  .sw.d{background:#fff7ed; border-color:var(--amber)}
+  .sw.e{background:#f5f3ff; border-color:#c4b5fd}
+  .lg b{color:var(--ink)}
+
+  footer{margin-top:24px; padding-top:14px; border-top:1px solid var(--line);
+         font-size:11px; color:var(--muted); display:flex; justify-content:space-between;
+         gap:16px; flex-wrap:wrap}
+
+  @media print{
+    body{background:#fff}
+    .sheet{box-shadow:none; max-width:none; padding:0}
+    .step,.zone,.tb{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <div>
+    <div class="kicker">Deliverable Wajib · Diagram Arsitektur</div>
+    <h1>CariUstadz — Alur Agent &amp; Trust Boundary</h1>
+  </div>
+  <div class="meta">
+    <div><code>cariustad-apps.vercel.app</code></div>
+    <div>Next.js 14 · App Router · region sin1</div>
+    <div>Challenge B — Agen Kantor</div>
+  </div>
+</header>
+
+<!-- ============ ZONA 1 ============ -->
+<div class="zone user">
+  <div class="ztitle">Zona 1 — Pengguna (browser)</div>
+  <div class="row">
+    <div class="step data">
+      <div class="n">1</div>
+      <div class="body">
+        <div class="t">Input pengguna — teks atau suara</div>
+        <div class="d">Web Speech API (<code>SpeechRecognition</code>) untuk suara, atau kotak teks. Contoh: <em>"saya mau booking ustadz untuk kajian, Senin jam 19:00, di Bandung, 50 orang"</em></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- boundary 1 -->
+<div class="tb">
+  <span class="tag">Trust boundary 1</span>
+  <span class="line"></span>
+  <span class="desc">Semua input diperlakukan sebagai <b>data</b>, bukan perintah. Tidak ada instruksi pengguna yang dapat mengubah aturan agent.</span>
+</div>
+
+<!-- ============ ZONA 2 ============ -->
+<div class="zone agent">
+  <div class="ztitle">Zona 2 — Agent (server Next.js, tepercaya)</div>
+
+  <div class="steps">
+
+    <div class="row with-out">
+      <div class="step guard">
+        <div class="n">2</div>
+        <div class="body">
+          <div class="t">Prompt Guard — 23 pola injeksi</div>
+          <div class="d">Deteksi deterministik frasa Indonesia &amp; Inggris: <code>abaikan aturan</code>, <code>you are now</code>, <code>disregard</code>, <code>reveal your system prompt</code>, <code>jailbreak</code>, <code>[system:</code>. Bukan bergantung pada model.</div>
+        </div>
+      </div>
+      <div class="out">
+        <div class="res">→ 422 injection_blocked</div>
+        <div class="why">Input dibersihkan lalu diperlakukan sebagai data. Aturan tetap berlaku.</div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row with-out">
+      <div class="step guard">
+        <div class="n">3</div>
+        <div class="body">
+          <div class="t">Scope Guard — batas domain</div>
+          <div class="d">Klasifikasi niat: <code>in_scope</code>, <code>off_topic</code>, <code>religious_ruling</code>. Pertanyaan fatwa/hukum agama <b>tidak pernah</b> dijawab AI.</div>
+        </div>
+      </div>
+      <div class="out">
+        <div class="res">→ 422 out_of_scope</div>
+        <div class="why">Off-topic ditolak. Fatwa dialihkan: "itu ranah ulama, saya carikan ustadznya."</div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row">
+      <div class="step">
+        <div class="n">4</div>
+        <div class="body">
+          <div class="t">Parse niat → parameter terstruktur</div>
+          <div class="d">Mesin aturan lokal mengekstrak: bidang, kota, jenis acara, hari, jam, jumlah jemaah, preferensi gender. Tanpa panggilan jaringan.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row">
+      <div class="step data">
+        <div class="n">5</div>
+        <div class="body">
+          <div class="t">Cari di basis data ustadz</div>
+          <div class="d">Filter profil, bidang keahlian, kota, tarif, rating. Setiap hasil <b>disitasi</b> — agent hanya menyebut ustadz yang benar-benar ada di katalog.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row with-out">
+      <div class="step decide">
+        <div class="n">6</div>
+        <div class="body">
+          <div class="t">Cultural Rules Check — aturan budaya Islam</div>
+          <div class="d">Bentrok Salat Jumat (Jumat 11:30–13:00), tumpang tindih waktu salat, preferensi gender (ustadz/ustadzah), kewajaran durasi.</div>
+        </div>
+      </div>
+      <div class="out">
+        <div class="res">→ minta klarifikasi</div>
+        <div class="why">Jadwal bertabrakan <b>ditolak</b>, bukan dipaksakan. Alternatif konkret ditawarkan.</div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row with-out">
+      <div class="step decide">
+        <div class="n">7</div>
+        <div class="body">
+          <div class="t">Cukup informasi?</div>
+          <div class="d">Jika parameter wajib belum lengkap, agent bertanya — tidak menebak lalu mengeksekusi.</div>
+        </div>
+      </div>
+      <div class="out">
+        <div class="res">→ pertanyaan balik</div>
+        <div class="why">"Bidang kajian apa, dan di kota mana?"</div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row">
+      <div class="step">
+        <div class="n">8</div>
+        <div class="body">
+          <div class="t">Susun rencana (plan), belum eksekusi</div>
+          <div class="d">Keluaran berupa kartu rencana: ustadz, acara, hari, waktu, lokasi. Tidak ada perubahan status apa pun di tahap ini.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row with-out">
+      <div class="step human">
+        <div class="n">9</div>
+        <div class="body">
+          <div class="t">⏸ Human-in-the-Loop — menunggu persetujuan eksplisit</div>
+          <div class="d"><b>Titik henti wajib.</b> Agent berhenti dan menunggu kata persetujuan ("setuju", "ya", "lanjut"). Tidak ada jalur yang melewati langkah ini.</div>
+        </div>
+      </div>
+      <div class="out">
+        <div class="res">→ tetap berhenti</div>
+        <div class="why">Tanpa persetujuan, tidak ada yang dicatat. Diam berarti belum setuju.</div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row">
+      <div class="step">
+        <div class="n">10</div>
+        <div class="body">
+          <div class="t">Eksekusi — catat booking</div>
+          <div class="d">Hanya berjalan setelah langkah 9. Status berubah menjadi <em>confirmed</em> dan muncul di halaman Booking.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v12M9 14l-5-5M9 14l5-5" stroke="#cbd5e1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="row">
+      <div class="step audit">
+        <div class="n">11</div>
+        <div class="body">
+          <div class="t">Audit Log — setiap langkah tercatat</div>
+          <div class="d">Waktu, langkah, keputusan, alasan, dan hasil. Dapat dibuka pengguna kapan saja dari halaman <code>/asisten</code>.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- boundary 2 -->
+<div class="tb">
+  <span class="tag">Trust boundary 2</span>
+  <span class="line"></span>
+  <span class="desc">Hanya <b>teks jawaban</b> yang dikirim keluar. Kunci API tidak pernah menyentuh browser; keputusan menolak/mengizinkan dibuat <b>sebelum</b> panggilan jaringan.</span>
+</div>
+
+<!-- ============ ZONA 3 ============ -->
+<div class="zone ext">
+  <div class="ztitle">Zona 3 — LLM eksternal (opsional, di luar kendali)</div>
+  <div class="row">
+    <div class="step audit" style="background:#fff;border-color:#c4b5fd">
+      <div class="n" style="background:#6d28d9">12</div>
+      <div class="body">
+        <div class="t">DeepSeek <code>deepseek-flash</code> → cadangan OpenRouter <code>mistral-nemo</code></div>
+        <div class="d">Dipakai <b>hanya</b> untuk memperhalus bahasa jawaban yang sudah diputuskan lokal. Penolakan, pemblokiran, dan rencana booking <b>tidak</b> memanggil LLM sama sekali. Keluaran model divalidasi ulang sebelum ditampilkan.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LEGENDA ============ -->
+<div class="legend">
+  <div class="lg"><span class="sw a"></span><div><b>Langkah normal</b> — berjalan otomatis di server</div></div>
+  <div class="lg"><span class="sw b"></span><div><b>Guard</b> — penolakan deterministik, tidak bisa dinegosiasi</div></div>
+  <div class="lg"><span class="sw c"></span><div><b>Percabangan</b> — agent berhenti untuk bertanya atau menolak</div></div>
+  <div class="lg"><span class="sw d"></span><div><b>Persetujuan manusia</b> — titik henti wajib sebelum eksekusi</div></div>
+  <div class="lg"><span class="sw e"></span><div><b>Audit / eksternal</b> — jejak dan pihak ketiga</div></div>
+  <div class="lg"><span class="sw" style="background:#fff;border-color:var(--red);border-style:dashed"></span><div><b>Garis putus-putus merah</b> — trust boundary</div></div>
+</div>
+
+<footer>
+  <span><b>CariUstadz</b> — AI CAN DO IT · Tencent Cloud Hackathon Indonesia 2026 · Challenge B (Agen Kantor)</span>
+  <span>Lembar Akuntabilitas lengkap: <code>AKUNTABILITAS.md</code></span>
+</footer>
+
+</div>
+</body>
+</html>

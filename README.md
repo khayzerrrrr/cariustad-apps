@@ -9,6 +9,17 @@ Platform pencarian & booking ustadz terverifikasi, dengan AI Agent yang menerima
 bahasa natural (teks maupun suara), menyusun rencana booking, dan **tidak pernah mengeksekusi
 apa pun tanpa persetujuan manusia**.
 
+### Berkas submisi
+
+| Deliverable | Berkas |
+|---|---|
+| Judul, blurb & deskripsi proyek | [`SUBMISI.md`](SUBMISI.md) |
+| Lembar akuntabilitas | [`AKUNTABILITAS.md`](AKUNTABILITAS.md) |
+| Hasil pengujian (output mentah) | [`HASIL_PENGUJIAN.html`](HASIL_PENGUJIAN.html) |
+| Diagram arsitektur + trust boundary | [`DIAGRAM_ARSITEKTUR.html`](DIAGRAM_ARSITEKTUR.html) |
+| Product sharing / nilai WorkBuddy | [`PRODUCT_SHARING.md`](PRODUCT_SHARING.md) |
+| Panduan deploy | [`DEPLOY_VERCEL.md`](DEPLOY_VERCEL.md) |
+
 ---
 
 ## Masalah
@@ -80,7 +91,7 @@ pilar: **Trust**, **Culture**, dan **Impact**.
   arah pandang per state. Tanpa WebGL, tanpa beban three.js.
 - **Input suara** — Web Speech API (gratis, tanpa API key), plus input teks
 - **Cultural Rules Engine** — Salat Jumat, bentrok waktu salat, preferensi gender
-- **Prompt Injection Guard** — 15 pola, input diperlakukan sebagai data
+- **Prompt Injection Guard** — 23 pola (Indonesia + Inggris), input diperlakukan sebagai data
 - **Scope Guard** — menolak pertanyaan fatwa & topik di luar domain
 - **Human-in-the-Loop** — booking selalu butuh persetujuan eksplisit
 - **Audit Log** — setiap langkah agent tercatat dan bisa dibuka pengguna
@@ -182,7 +193,7 @@ src/
     │   ├── answerEngine.ts     orkestrasi scope → LLM → validasi → fallback
     │   ├── culturalRules.ts    Salat Jumat, waktu salat, gender
     │   ├── scopeGuard.ts       batas domain + deteksi fatwa
-    │   ├── promptGuard.ts      15 pola prompt injection
+    │   ├── promptGuard.ts      23 pola prompt injection
     │   ├── grounding.ts        data terverifikasi untuk LLM
     │   ├── auditLog.ts         jejak audit
     │   └── bookingParser.ts    bahasa natural → field terstruktur
