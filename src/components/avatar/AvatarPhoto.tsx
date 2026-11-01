@@ -5,9 +5,10 @@
  *
  * Cara kerja (semua layer dari foto asli, bukan tempelan):
  *  1. `photo-face.png`     — kepala utuh (lapisan dasar)
- *  2. Rongga mulut SVG     — di belakang rahang, hanya terlihat saat mulut terbuka
+ *  2. Bayangan mulut SVG   — kecil, blur & termask lembut; hanya samar
+ *     terlihat saat bibir terbuka (v3: tanpa gigi palsu, tanpa oval raksasa)
  *  3. `photo-face-jaw.png` — potongan rahang bawah (dari garis mulut ke dagu,
- *     tepi atas di-feather). Saat bicara lapisan ini TURUN beberapa piksel —
+ *     tepi atas di-feather). Saat bicara lapisan ini TURUN sedikit —
  *     mulut foto sendiri yang terbuka, bukan gambar yang ditempel.
  *  4. Kelopak mata — warna kulit hasil sampling foto, untuk kedip alami.
  *
@@ -39,8 +40,7 @@ interface AvatarPhotoProps {
 const CPS = 13;
 
 const SKIN = String(photoMeta.skinColor ?? "#a6785b");
-const CAVITY = "rgba(44, 12, 10, 0.92)";
-const TEETH = "#f5f0ea";
+const CAVITY = "rgba(58, 20, 16, 0.8)";
 
 /* Posisi ternormalisasi (0..1 relatif gambar) */
 const MCX = photoMeta.mouthCenter.x;
@@ -55,10 +55,14 @@ const JAW_H_RATIO = photoMeta.image.w / photoMeta.image.h; // lebar/tinggi
 /* tinggi elemen absolut = % dari TINGGI kontainer → perlu konversi rasio */
 const LID_W = EYE_SIZE * 5.6 * 100;
 const LID_H = EYE_SIZE * 4.6 * JAW_H_RATIO * 100;
-/* Turunan rahang sebagai % tinggi lapisan rahang sendiri (untuk translateY) */
+/* Turunan rahang sebagai % tinggi lapisan rahang sendiri (untuk translateY).
+   v3: dibatasi 45% dari potensi penuh — cukup untuk membuka bibir secara
+   natural tanpa membuat wajah tampak distorsi. */
 const JAW_SLICE_H = 1 - JAW.topY; // tinggi potongan (norm tinggi gambar)
-const JAW_DROP_PCT = (JAW.maxDrop / JAW_SLICE_H) * 100;
-/* Geometri rongga mulut dalam unit viewBox (svg 100×60, lebar overlay = MW*1.35) */
+const JAW_DROP_PCT = (JAW.maxDrop / JAW_SLICE_H) * 100 * 0.45;
+/* Geometri rongga mulut dalam unit viewBox (svg 100×60).
+   v3: rongga kecil & samar — hanya bayangan gelap di antara bibir, bukan
+   oval raksasa (penyebab tampilan "aneh" pada versi sebelumnya). */
 const CAV_UNIT =
   (JAW.maxDrop * (1 / JAW_H_RATIO) * 100 * 0.85) / (MW * 1.35);
 
@@ -70,7 +74,6 @@ export default function AvatarPhoto({
   const head = useRef<HTMLDivElement>(null);
   const jaw = useRef<HTMLImageElement>(null);
   const cavity = useRef<SVGEllipseElement>(null);
-  const teeth = useRef<SVGPathElement>(null);
   const lidR = useRef<HTMLDivElement>(null);
   const lidL = useRef<HTMLDivElement>(null);
 
@@ -134,40 +137,25 @@ export default function AvatarPhoto({
       };
       const { jaw: jawV, width } = cur.current;
 
-      /* ---------- lapisan rahang turun + regang sedikit ---------- */
+      /* ---------- lapisan rahang turun + regang sangat halus ---------- */
       const dropPct = (jawV * JAW_DROP_PCT).toFixed(2);
-      const stretch = (1 + jawV * 0.012).toFixed(4);
+      const stretch = (1 + jawV * 0.006).toFixed(4);
       jaw.current?.style.setProperty(
         "transform",
         `translateY(${dropPct}%) scaleY(${stretch})`
       );
 
-      /* ---------- rongga mulut di belakang rahang ---------- */
-      const ry = (1.5 + jawV * CAV_UNIT * 1.15).toFixed(2);
-      const rx = (26 * (0.8 + width * 0.3)).toFixed(2);
-      const cy = (30 + jawV * CAV_UNIT * 0.55).toFixed(2);
+      /* ---------- rongga mulut: bayangan kecil di antara bibir ---------- */
+      const ry = (1.1 + jawV * 4.2).toFixed(2);
+      const rx = (20 * (0.8 + width * 0.3)).toFixed(2);
+      const cy = (30 + jawV * 1.6).toFixed(2);
       cavity.current?.setAttribute("rx", rx);
       cavity.current?.setAttribute("ry", ry);
       cavity.current?.setAttribute("cy", cy);
       cavity.current?.setAttribute(
         "opacity",
-        (jawV > 0.1 ? Math.min(1, (jawV - 0.1) * 5) : 0).toFixed(2)
+        (jawV > 0.12 ? Math.min(0.85, (jawV - 0.12) * 4) : 0).toFixed(2)
       );
-
-      /* ---------- gigi atas menempel di garis potong ---------- */
-      const showTeeth = jawV > 0.28;
-      teeth.current?.setAttribute("opacity", showTeeth ? "0.95" : "0");
-      if (showTeeth) {
-        const tr = 26 * (0.8 + width * 0.3) * 0.82;
-        const ty = 30 - jawV * CAV_UNIT * 0.55;
-        teeth.current?.setAttribute(
-          "d",
-          `M ${(50 - tr).toFixed(2)} ${(ty + 1).toFixed(2)}
-           Q 50 ${(ty + 4).toFixed(2)} ${(50 + tr).toFixed(2)} ${(ty + 1).toFixed(2)}
-           L ${(50 + tr).toFixed(2)} ${(ty + 2.6).toFixed(2)}
-           Q 50 ${(ty + 5.6).toFixed(2)} ${(50 - tr).toFixed(2)} ${(ty + 2.6).toFixed(2)} Z`
-        );
-      }
 
       /* ---------- kedip mata (kelopak warna kulit foto) ---------- */
       if (blinkStart < 0 && now > nextBlink) blinkStart = now;
@@ -244,7 +232,7 @@ export default function AvatarPhoto({
           style={{ filter: "drop-shadow(0 12px 22px rgba(6,78,59,0.18))" }}
         />
 
-        {/* 2. rongga mulut — di belakang rahang, terlihat saat terbuka */}
+        {/* 2. rongga mulut — bayangan kecil, lembut, di antara bibir */}
         <div
           className="pointer-events-none absolute"
           style={{
@@ -252,6 +240,11 @@ export default function AvatarPhoto({
             top: `${MCY * 100}%`,
             width: `${MW * 1.35 * 100}%`,
             transform: "translate(-50%, -50%)",
+            filter: "blur(1.4px)",
+            maskImage:
+              "radial-gradient(ellipse 60% 55% at 50% 50%, black 55%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 60% 55% at 50% 50%, black 55%, transparent 100%)",
           }}
         >
           <svg viewBox="0 0 100 60" className="w-full" aria-hidden="true">
@@ -259,12 +252,11 @@ export default function AvatarPhoto({
               ref={cavity}
               cx="50"
               cy="30"
-              rx="24"
+              rx="16"
               ry="0"
               fill={CAVITY}
               opacity="0"
             />
-            <path ref={teeth} d="" fill={TEETH} opacity="0" />
           </svg>
         </div>
 

@@ -13,7 +13,7 @@ import TranscriptPanel, { ChatMessage } from "./TranscriptPanel";
 import VoiceControls from "./VoiceControls";
 import Avatar2D from "@/components/avatar/Avatar2D";
 import AvatarPhoto from "@/components/avatar/AvatarPhoto";
-import { Camera, Palette } from "lucide-react";
+import { Camera, Palette, VolumeX } from "lucide-react";
 
 const STATE_LABELS: Record<AvatarState, string> = {
   idle: "Siap membantu",
@@ -47,6 +47,8 @@ export default function AsistenClient() {
   const [micError, setMicError] = useState<string | null>(null);
   const [speakingText, setSpeakingText] = useState("");
   const [speakChar, setSpeakChar] = useState(-1);
+  /** TTS tidak menghasilkan suara di browser ini (mis. Brave memblokir voice) */
+  const [ttsBroken, setTtsBroken] = useState(false);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [injectionCount, setInjectionCount] = useState(0);
@@ -112,6 +114,11 @@ export default function AsistenClient() {
           onSpeakEnd: () => {
             dispatch("STOP_SPEAKING");
             setSpeakChar(-1);
+          },
+          onSpeakError: () => {
+            dispatch("STOP_SPEAKING");
+            setSpeakChar(-1);
+            setTtsBroken(true);
           },
         });
       }
@@ -221,7 +228,7 @@ export default function AsistenClient() {
 
         // Speak response
         const ve = voiceEngineRef.current;
-        if (!isMuted && ve.isSynthesisSupported) {
+        if (!isMuted && !ttsBroken && ve.isSynthesisSupported) {
           setSpeakingText(result.reply);
           setSpeakChar(0);
           dispatch("START_SPEAKING");
@@ -231,6 +238,11 @@ export default function AsistenClient() {
             onSpeakEnd: () => {
               dispatch("STOP_SPEAKING");
               setSpeakChar(-1);
+            },
+            onSpeakError: () => {
+              dispatch("STOP_SPEAKING");
+              setSpeakChar(-1);
+              setTtsBroken(true);
             },
           });
         } else {
@@ -254,7 +266,7 @@ export default function AsistenClient() {
         setTimeout(() => dispatch("RESET"), 2000);
       }
     },
-    [messages, isMuted, dispatch]
+    [messages, isMuted, ttsBroken, dispatch]
   );
 
   const handleToggleListen = useCallback(async () => {
@@ -435,6 +447,26 @@ export default function AsistenClient() {
                   </>
                 )}
               </button>
+
+              {/* Peringatan TTS tidak berfungsi (mis. Brave memblokir suara) */}
+              {ttsBroken && !isMuted && (
+                <div className="absolute bottom-16 left-4 right-4 z-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/95 backdrop-blur px-3 py-2 shadow-md">
+                  <VolumeX className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                  <p className="text-xs leading-relaxed text-amber-800">
+                    Suara tidak dapat diputar di browser ini (teks tetap tampil di
+                    chat). Untuk demo dengan suara, gunakan{" "}
+                    <strong>Chrome</strong> atau <strong>Microsoft Edge</strong> —
+                    di Edge asisten berbicara dengan suara laki-laki Indonesia.
+                  </p>
+                  <button
+                    onClick={() => setTtsBroken(false)}
+                    className="ml-auto shrink-0 text-amber-500 hover:text-amber-700"
+                    aria-label="Tutup peringatan"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
 
               {/* State indicator */}
               <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 shadow-sm">

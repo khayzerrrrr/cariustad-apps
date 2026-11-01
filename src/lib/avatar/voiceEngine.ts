@@ -16,6 +16,8 @@ export interface VoiceEngineCallbacks {
   onSpeakStart?: () => void;
   onSpeakEnd?: () => void;
   onSpeakBoundary?: (charIndex: number) => void;
+  /** TTS dipanggil tapi tidak menghasilkan suara (mis. Brave memblokir voice). */
+  onSpeakError?: (reason: string) => void;
 }
 
 /* Nama suara bernuansa laki-laki di berbagai platform.
@@ -362,19 +364,42 @@ export class VoiceEngine {
       this.callbacks = { ...this.callbacks, ...callbacks };
     }
 
+    /* Penjaga agar onSpeakEnd/onSpeakError hanya terpanggil sekali per ujaran */
+    let finished = false;
+    const finish = (err?: string) => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(watchdog);
+      this.speaking = false;
+      this.currentUtterance = null;
+      if (err) {
+        this.callbacks.onSpeakError?.(err);
+      }
+      this.callbacks.onSpeakEnd?.();
+    };
+
+    /* Watchdog "bisu": sebagian browser (terutama Brave dengan Shields)
+       membiarkan speechSynthesis.speak() tanpa suara dan TANPA event apa
+       pun — onend tidak pernah datang sehingga avatar nyangkut di state
+       "berbicara". Jika dalam 1,5 detik tidak ada tanda pembicaraan,
+       nyatakan gagal secara eksplisit. */
+    const watchdog = window.setTimeout(() => {
+      const engineBusy = this.synth ? this.synth.speaking || this.synth.pending : false;
+      if (!this.speaking && !engineBusy) {
+        finish("silent");
+      }
+    }, 1500);
+
     utterance.onstart = () => {
       this.speaking = true;
       this.callbacks.onSpeakStart?.();
     };
 
-    utterance.onend = () => {
-      this.speaking = false;
-      this.callbacks.onSpeakEnd?.();
-    };
+    utterance.onend = () => finish();
 
-    utterance.onerror = () => {
-      this.speaking = false;
-      this.callbacks.onSpeakEnd?.();
+    utterance.onerror = (event) => {
+      const err = (event as SpeechSynthesisErrorEvent)?.error || "error";
+      finish(`tts:${err}`);
     };
 
     utterance.onboundary = (event) => {
