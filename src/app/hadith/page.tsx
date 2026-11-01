@@ -12,7 +12,8 @@ export default function HadithPage() {
   return (
     <div className="bg-sand-50">
       {/* Hero with daily hadith */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900 islamic-pattern">
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900">
+        <div className="islamic-pattern absolute inset-0 opacity-[0.12]" />
         <div className="relative mx-auto max-w-3xl px-4 py-12 text-center sm:px-6 sm:py-16">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
             <BookOpen className="h-3.5 w-3.5" />

@@ -60,7 +60,8 @@ export default function TentangPage() {
   return (
     <div className="bg-sand-50">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900 islamic-pattern">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900">
+        <div className="islamic-pattern absolute inset-0 opacity-[0.12]" />
         <div className="relative mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20">
             <Lightbulb className="h-3.5 w-3.5" />
@@ -191,7 +192,9 @@ export default function TentangPage() {
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900 islamic-pattern px-6 py-12 text-center sm:px-12">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900 px-6 py-12 text-center sm:px-12">
+          <div className="islamic-pattern absolute inset-0 opacity-[0.12]" />
+          <div className="relative">
           <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">
             Mulai Perjalanan Dakwah Anda Hari Ini
           </h2>
@@ -205,6 +208,7 @@ export default function TentangPage() {
           >
             Cari Ustadz Sekarang <ArrowRight className="h-4 w-4" />
           </Link>
+          </div>
         </div>
       </section>
     </div>

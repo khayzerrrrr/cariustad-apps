@@ -49,8 +49,9 @@ export default function KajianPage() {
   return (
     <div className="bg-sand-50">
       {/* Header */}
-      <div className="border-b border-sand-200 bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900 islamic-pattern">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="relative overflow-hidden border-b border-sand-200 bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900">
+        <div className="islamic-pattern absolute inset-0 opacity-[0.12]" />
+        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/20">
             <CalendarDays className="h-3.5 w-3.5" />
             Info Kajian
