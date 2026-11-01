@@ -1,5 +1,6 @@
 import { ustadzData, kajianData } from "@/lib/data";
 import { ALL_SPECIALIZATIONS, ALL_CITIES, Ustadz, Kajian } from "@/lib/types";
+import { ALL_PROVINCES } from "@/lib/regions";
 import { formatRupiah } from "@/lib/storage";
 
 export interface SearchResult {
@@ -162,6 +163,6 @@ export function searchKajian(query?: string): SearchResult {
 export function listAllUstadz(): SearchResult {
   return {
     list: ustadzData,
-    text: `Platform CariUstadz saat ini memiliki ${ustadzData.length} ustadz terverifikasi di ${ALL_CITIES.length} kota. Anda bisa mencari berdasarkan:\n\n- Spesialisasi: ${ALL_SPECIALIZATIONS.slice(0, 5).join(", ")}...\n- Kota: ${ALL_CITIES.slice(0, 5).join(", ")}...\n- Nama ustadz\n\nSilakan beritahu saya kebutuhan Anda, dan saya akan bantu mencarikan ustadz yang tepat.`,
+    text: `Platform CariUstadz saat ini memiliki ${ustadzData.length} ustadz & ustadzah terverifikasi di ${ALL_CITIES.length} kota, ${ALL_PROVINCES.length} provinsi — dari Aceh sampai Papua. Anda bisa mencari berdasarkan:\n\n- Spesialisasi: ${ALL_SPECIALIZATIONS.slice(0, 5).join(", ")}...\n- Kota atau provinsi (mis. "di Sumatera", "di Sulawesi Selatan")\n- Nama ustadz\n\nSilakan beritahu saya kebutuhan Anda, dan saya akan bantu mencarikan ustadz yang tepat.`,
   };
 }

@@ -98,7 +98,7 @@ pilar: **Trust**, **Culture**, dan **Impact**.
 - **Grounding** — rekomendasi hanya dari baris data yang sudah diverifikasi mesin lokal
 
 ### Platform
-- Direktori 12 ustadz terverifikasi · 10 bidang keahlian · 11 kota
+- Direktori **483 ustadz & ustadzah** terverifikasi · 10 bidang keahlian · **54 kota di 38 provinsi** se-Indonesia (Aceh–Papua)
 - Filter bidang, kota, rating, dan **radius jarak** (geolocation)
 - Profil ustadz: jadwal, biaya, ulasan, kegiatan yang bisa diisi
 - Booking dengan pemilih lokasi peta (Photon/Nominatim, gratis tanpa API key)

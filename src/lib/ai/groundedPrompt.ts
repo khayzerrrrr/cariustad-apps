@@ -8,6 +8,7 @@
 
 import { ustadzData, kajianData } from "@/lib/data";
 import { ALL_SPECIALIZATIONS, ALL_CITIES } from "@/lib/types";
+import { ALL_PROVINCES } from "@/lib/regions";
 import { formatRupiah } from "@/lib/storage";
 
 function buildUstadzCatalog(): string {
@@ -91,5 +92,5 @@ ${buildKajianCatalog()}
 
 ## Cakupan
 Bidang: ${ALL_SPECIALIZATIONS.join(", ")}
-Kota: ${ALL_CITIES.join(", ")}`;
+Provinsi: ${ALL_PROVINCES.join(", ")}`;
 }

@@ -39,7 +39,7 @@ export default function UstadzCard({
           <div className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">
             <MapPin className="h-3.5 w-3.5 text-primary-400" />
             <span className="truncate">
-              {ustadz.area}, {ustadz.city}
+              {ustadz.city}, {ustadz.province}
             </span>
           </div>
           {distance != null && (

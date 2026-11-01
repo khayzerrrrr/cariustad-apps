@@ -92,15 +92,19 @@ export function parseBookingRequest(message: string): ParsedBookingRequest {
     }
   }
 
-  // Extract city — check against ALL_CITIES
+  // Extract city — dari seluruh kota yang terdaftar di regions.ts
+  // (cari kunci terpanjang dulu agar "tangerang selatan" menang atas
+  // "tangerang").
   let city: string | undefined;
-  const cityKeywords = [
-    "jakarta", "bandung", "surabaya", "yogyakarta", "semarang",
-    "tangerang", "bekasi", "depok", "bogor", "malang", "makassar",
-  ];
-  for (const c of cityKeywords) {
-    if (msg.includes(c)) {
-      city = c.charAt(0).toUpperCase() + c.slice(1);
+  const cityKeywords = [...ALL_CITIES]
+    .map((c) => ({
+      full: c,
+      short: c.replace(/\s*\(.*\)$/, "").toLowerCase(),
+    }))
+    .sort((a, b) => b.short.length - a.short.length);
+  for (const { full, short } of cityKeywords) {
+    if (msg.includes(short)) {
+      city = full;
       break;
     }
   }
@@ -134,7 +138,7 @@ export function parseBookingRequest(message: string): ParsedBookingRequest {
     location = locMatch[1].trim();
     // Rapikan kapitalisasi: "bandung" -> "Bandung"
     const canonicalCity = ALL_CITIES.find(
-      (c) => c.toLowerCase() === location!.toLowerCase()
+      (c) => c.replace(/\s*\(.*\)$/, "").toLowerCase() === location!.toLowerCase()
     );
     location = canonicalCity
       ? canonicalCity

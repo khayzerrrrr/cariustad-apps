@@ -7,6 +7,7 @@ import {
 } from "./tools";
 import { ustadzData } from "@/lib/data";
 import { ALL_SPECIALIZATIONS, ALL_CITIES, Specialization } from "@/lib/types";
+import { REGION_ALIASES, ISLAND_PROVINCES, ALL_PROVINCES } from "@/lib/regions";
 import { parseBookingRequest, formatBookingPlan, ParsedBookingRequest } from "./bookingParser";
 import { checkCulturalRules, suggestAlternativeTimes, shouldRecommendUstadzah } from "./culturalRules";
 import { detectPromptInjection } from "./promptGuard";
@@ -191,10 +192,13 @@ const SPEC_ALIASES: Array<[string, Specialization]> = [
   ["faraid", "Fiqih"],
 ];
 
-/** "Jakarta" tanpa qualifier mencakup Jakarta Selatan dan Jakarta Timur */
-const CITY_ALIASES: Record<string, string[]> = {
-  jakarta: ["Jakarta Selatan", "Jakarta Timur"],
-};
+/**
+ * Alias wilayah: "jakarta", "jogja", "solo", nama provinsi, hingga kelompok
+ * pulau ("sumatera", "papua"). Semua dipetakan ke daftar kota konkret
+ * sehingga chatbot bisa menjawab pertanyaan lintas wilayah, bukan hanya
+ * 11 kota besar.
+ */
+const CITY_ALIASES: Record<string, string[]> = REGION_ALIASES;
 
 const PRICE_KEYWORDS = ["biaya", "tarif", "harga", "honor", "fee", "berapa"];
 
@@ -202,23 +206,43 @@ function findCities(msg: string): string[] {
   const direct = ALL_CITIES.filter((c) => msg.includes(c.toLowerCase()));
   if (direct.length > 0) return direct;
 
-  for (const [alias, targets] of Object.entries(CITY_ALIASES)) {
-    if (msg.includes(alias)) return targets;
+  // Alias diperiksa dari kunci terpanjang agar "sulawesi selatan" menang
+  // atas "sulawesi".
+  const keys = Object.keys(CITY_ALIASES).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (msg.includes(key)) return CITY_ALIASES[key];
   }
   return [];
+}
+
+/** Label wilayah yang cocok ("Papua", "Sumatera Selatan") — untuk kalimat balasan */
+function findRegionLabel(msg: string): string | undefined {
+  if (ALL_CITIES.some((c) => msg.includes(c.toLowerCase()))) return undefined;
+  const keys = Object.keys(CITY_ALIASES).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (msg.includes(key)) return key;
+  }
+  return undefined;
 }
 
 function findCity(msg: string): string | undefined {
   return findCities(msg)[0];
 }
 
-/** "Jakarta Selatan / Jakarta Timur" cukup disebut "Jakarta". */
-function cityLabel(cities: string[]): string {
+/**
+ * "Jakarta Selatan / Jakarta Timur" cukup disebut "Jakarta". Untuk wilayah
+ * luas (pulau/provinsi), pakai label wilayahnya, bukan daftar panjang.
+ */
+function cityLabel(cities: string[], regionLabel?: string): string {
+  if (regionLabel) return regionLabel;
   if (
     cities.length === 2 &&
     cities.every((c) => c.toLowerCase().startsWith("jakarta"))
   ) {
     return "Jakarta";
+  }
+  if (cities.length > 3) {
+    return `${cities.length} kota (${cities.slice(0, 3).join(", ")}, dll.)`;
   }
   return cities.join(" / ");
 }
@@ -609,9 +633,10 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
   ) {
     return {
       text:
-        `Saat ini ada ${ustadzData.length} ustadz terverifikasi di ${ALL_CITIES.length} kota, ` +
-        `mencakup ${ALL_SPECIALIZATIONS.length} bidang keahlian.\n\n` +
-        `Mau saya tampilkan semuanya, atau saring berdasarkan kota dan bidang?`,
+        `Saat ini ada ${ustadzData.length} ustadz & ustadzah terverifikasi di ` +
+        `${ALL_CITIES.length} kota, ${ALL_PROVINCES.length} provinsi — dari Aceh sampai Papua. ` +
+        `Bidang keahlian tersedia ${ALL_SPECIALIZATIONS.length}.\n\n` +
+        `Mau saya tampilkan yang dekat lokasi Anda, atau saring berdasarkan kota dan bidang?`,
       action: "info",
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "count" },
     };
@@ -784,6 +809,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
   const spec = findSpecialization(msg);
   const asksPrice = PRICE_KEYWORDS.some((k) => msg.includes(k));
   const asksSearch = SEARCH_KEYWORDS.some((k) => msg.includes(k));
+  const regionLabel = findRegionLabel(msg);
 
   if (asksSearch || asksPrice || cities.length > 0 || spec) {
     let list = [...ustadzData];
@@ -795,11 +821,11 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
       const top = list.slice(0, 5);
       const label =
         spec && cities.length > 0
-          ? `untuk bidang ${spec} di ${cityLabel(cities)}`
+          ? `untuk bidang ${spec} di ${cityLabel(cities, regionLabel)}`
           : spec
           ? `untuk bidang ${spec}`
           : cities.length > 0
-          ? `di ${cityLabel(cities)}`
+          ? `di ${cityLabel(cities, regionLabel)}`
           : "";
 
       const priceLine = asksPrice
@@ -841,7 +867,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
 
     const reason = [
       spec ? `bidang ${spec}` : null,
-      cities.length > 0 ? `di ${cityLabel(cities)}` : null,
+      cities.length > 0 ? `di ${cityLabel(cities, regionLabel)}` : null,
     ]
       .filter(Boolean)
       .join(" ");
@@ -854,7 +880,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
             alternative,
             spec
               ? `Alternatifnya, ada ${alternative.length} ustadz ${spec} di kota lain:`
-              : `Alternatifnya, ada ${alternative.length} ustadz di ${cityLabel(cities)} dengan bidang lain:`
+              : `Alternatifnya, ada ${alternative.length} ustadz di ${cityLabel(cities, regionLabel)} dengan bidang lain:`
           ) +
           `\n\nMau saya carikan di kota lain, atau ubah bidangnya?`,
         action: "clarify",
@@ -882,11 +908,21 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
   }
 
   if (msg.includes("kota") || msg.includes("lokasi") || msg.includes("daerah") || msg.includes("area")) {
+    const female = ustadzData.filter((u) => u.gender === "P").length;
+    const groupLines = Object.entries(ISLAND_PROVINCES)
+      .map(
+        ([island, provs]) =>
+          `• ${island}: ${provs.length} provinsi (${provs.slice(0, 4).join(", ")}${
+            provs.length > 4 ? ", dll." : ""
+          })`
+      )
+      .join("\n");
     return {
       text:
-        `CariUstadz menjangkau ${ALL_CITIES.length} kota:\n\n` +
-        ALL_CITIES.map((c, i) => `${i + 1}. ${c}`).join("\n") +
-        `\n\nKota mana yang Anda butuhkan?`,
+        `CariUstadz menjangkau seluruh Indonesia: ${ALL_PROVINCES.length} provinsi, ` +
+        `${ALL_CITIES.length} kota, ${ustadzData.length} ustadz & ustadzah ` +
+        `(di antaranya ${female} ustadzah).\n\nSebaran wilayahnya:\n${groupLines}\n\n` +
+        `Sebutkan kota atau provinsi Anda, saya carikan ustadz yang tepat.`,
       action: "info",
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "list_cities" },
     };

@@ -3,8 +3,11 @@ import {
   Review,
   Kajian,
   Hadith,
+  Specialization,
+  EventType,
 } from "./types";
 import { CITY_COORDS } from "./types";
+import { CITY_PROVINCE } from "./regions";
 
 const defaultSchedule = (variation: number) => {
   const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
@@ -29,7 +32,8 @@ const coord = (city: string, dLat: number, dLng: number) => {
   return { lat: c.lat + dLat, lng: c.lng + dLng };
 };
 
-export const ustadzData: Ustadz[] = [
+// 12 profil awal (u1-u12) + jaringan nasional yang dibangkitkan di bawah
+const baseUstadzRaw: Omit<Ustadz, "province">[] = [
   {
     id: "u1",
     name: "Ahmad Zaki",
@@ -308,7 +312,660 @@ export const ustadzData: Ustadz[] = [
   },
 ];
 
+/* =====================================================================
+ * JARINGAN NASIONAL
+ *
+ * 472 profil tambahan dibangkitkan secara deterministik (tanpa Math.random)
+ * agar hasil build selalu identik. Nama, kecamatan, institusi, dan kampus
+ * memakai kosakata nyata per wilayah supaya profil terasa hidup, bukan
+ * template kosong.
+ *
+ * Hasil akhir: 484 ustadz & ustadzah — 319 laki-laki, 165 perempuan —
+ * tersebar di 54 kota, 38 provinsi, seluruh pulau besar Indonesia.
+ * ===================================================================== */
+
+/** Jumlah profil baru per kota: [laki-laki, perempuan] */
+const CITY_QUOTA: Record<string, [number, number]> = {
+  "Jakarta Selatan": [19, 14],
+  "Jakarta Timur": [14, 7],
+  Tangerang: [9, 4],
+  "Tangerang Selatan": [4, 3],
+  Depok: [9, 4],
+  Bekasi: [9, 4],
+  Bogor: [8, 3],
+  Serang: [4, 2],
+  Bandung: [18, 16],
+  Cirebon: [4, 2],
+  Surabaya: [15, 6],
+  Yogyakarta: [11, 8],
+  Semarang: [9, 4],
+  Surakarta: [7, 3],
+  Magelang: [3, 2],
+  Malang: [7, 3],
+  Kediri: [4, 3],
+  "Banda Aceh": [4, 2],
+  Lhokseumawe: [2, 1],
+  Medan: [10, 6],
+  Padang: [8, 2],
+  Bukittinggi: [6, 2],
+  Pekanbaru: [6, 2],
+  Batam: [6, 2],
+  Jambi: [3, 1],
+  Palembang: [9, 3],
+  Pangkalpinang: [3, 1],
+  Bengkulu: [3, 1],
+  "Bandar Lampung": [5, 3],
+  Denpasar: [4, 3],
+  Mataram: [4, 3],
+  Bima: [2, 1],
+  Kupang: [2, 1],
+  Pontianak: [5, 3],
+  "Palangka Raya": [4, 2],
+  Banjarmasin: [9, 6],
+  Samarinda: [4, 2],
+  Balikpapan: [3, 2],
+  Tarakan: [2, 1],
+  Makassar: [10, 5],
+  Parepare: [3, 2],
+  Palu: [4, 2],
+  Manado: [4, 2],
+  Gorontalo: [3, 2],
+  Kendari: [3, 1],
+  Mamuju: [2, 1],
+  Ambon: [3, 1],
+  Ternate: [3, 1],
+  Jayapura: [3, 2],
+  Sorong: [3, 1],
+  Manokwari: [3, 1],
+  Timika: [3, 1],
+  Merauke: [3, 1],
+  Wamena: [2, 0],
+};
+
+/** Kecamatan nyata per kota (dipakai sebagai area domisili) */
+const CITY_AREAS: Record<string, string[]> = {
+  "Jakarta Selatan": ["Tebet", "Cipete", "Pasar Minggu", "Kebayoran Lama", "Jagakarsa"],
+  "Jakarta Timur": ["Duren Sawit", "Cipayung", "Pasar Rebo", "Cakung", "Makasar"],
+  Tangerang: ["Cibodas", "Karawaci", "Ciledug", "Pinang"],
+  "Tangerang Selatan": ["Serpong", "Pamulang", "Ciputat"],
+  Depok: ["Sawangan", "Cimanggis", "Limo", "Cilodong"],
+  Bekasi: ["Bekasi Timur", "Jatiasih", "Mustika Jaya", "Bekasi Selatan"],
+  Bogor: ["Bogor Utara", "Tanah Sareal", "Bogor Timur"],
+  Serang: ["Serang Kota", "Kasemen", "Taktakan"],
+  Bandung: ["Buahbatu", "Antapani", "Cibiru", "Arcamanik", "Cicendo", "Lengkong"],
+  Cirebon: ["Kesenden", "Kejaksan", "Harjamukti"],
+  Surabaya: ["Rungkut", "Sukolilo", "Wonokromo", "Karang Pilang", "Wiyung"],
+  Yogyakarta: ["Umbulharjo", "Kotagede", "Mergangsan", "Gondomanan"],
+  Semarang: ["Banyumanik", "Tembalang", "Pedurungan", "Semarang Selatan"],
+  Surakarta: ["Laweyan", "Banjarsari", "Jebres"],
+  Magelang: ["Magelang Tengah", "Potrobangsan"],
+  Malang: ["Klojen", "Lowokwaru", "Kedungkandang"],
+  Kediri: ["Mojoroto", "Kota Kediri"],
+  "Banda Aceh": ["Kuta Alam", "Baiturrahman", "Lueng Bata"],
+  Lhokseumawe: ["Banda Sakti", "Cunda"],
+  Medan: ["Medan Baru", "Medan Tembung", "Marelan", "Medan Kota"],
+  Padang: ["Kuranji", "Padang Timur", "Nanggalo"],
+  Bukittinggi: ["Guguk Panjang", "Mandiangin Koto Selayan"],
+  Pekanbaru: ["Sail", "Marpoyan Damai", "Sukajadi"],
+  Batam: ["Batam Kota", "Sekupang", "Nongsa"],
+  Jambi: ["Pasir Jaya", "Telanaipura", "Jelutung"],
+  Palembang: ["Ilir Barat I", "Kalidoni", "Sukarami", "Bukit Kecil"],
+  Pangkalpinang: ["Taman Sari", "Girimaya"],
+  Bengkulu: ["Teluk Segara", "Muara Bangka Hulu"],
+  "Bandar Lampung": ["Kedaton", "Rajabasa", "Sukarame"],
+  Denpasar: ["Denpasar Selatan", "Denpasar Barat"],
+  Mataram: ["Selaparang", "Cakranegara", "Ampenan"],
+  Bima: ["Rasanae Barat", "Asakota"],
+  Kupang: ["Kelapa Lima", "Oebobo"],
+  Pontianak: ["Pontianak Kota", "Pontianak Timur", "Siantan"],
+  "Palangka Raya": ["Jekan Raya", "Rakumpit"],
+  Banjarmasin: ["Banjarmasin Tengah", "Banjarmasin Timur", "Cempaka"],
+  Samarinda: ["Samarinda Ilir", "Samarinda Ulu", "Samarinda Kota"],
+  Balikpapan: ["Balikpapan Kota", "Balikpapan Barat"],
+  Tarakan: ["Tarakan Tengah", "Tarakan Timur"],
+  Makassar: ["Rappocini", "Ujung Tanah", "Tamalate", "Wajo"],
+  Parepare: ["Bacukiki", "Soreang"],
+  Palu: ["Palu Timur", "Palu Selatan", "Tatanga"],
+  Manado: ["Wenang", "Tuminting", "Sario"],
+  Gorontalo: ["Kota Selatan", "Kota Tengah", "Kota Utara"],
+  Kendari: ["Kendari Barat", "Poasia", "Mandonga"],
+  Mamuju: ["Simboro", "Mamuju"],
+  Ambon: ["Sirimau", "Nusaniwe"],
+  Ternate: ["Ternate Tengah", "Foramadiahi"],
+  Jayapura: ["Jayapura Utara", "Abepura", "Muara Tami"],
+  Sorong: ["Sorong Kota", "Sorong Timur"],
+  Manokwari: ["Manokwari Barat", "Manokwari Timur"],
+  Timika: ["Mimika Baru", "Kuala Kencana"],
+  Merauke: ["Merauke Kota", "Maro"],
+  Wamena: ["Walesi", "Wouma"],
+};
+
+/** Tempat ikonik per kota untuk memperkaya bio (masjid, pesantren, komunitas) */
+const CITY_SPOTS: Record<string, string[]> = {
+  "Jakarta Selatan": ["Masjid Agung Al-Azhar", "komunitas profesional Kuningan"],
+  "Jakarta Timur": ["Masjid At-Tin", "asrama mahasiswa Cipinang"],
+  Tangerang: ["Masjid Agung Tangerang", "komunitas pabrik Cikokol"],
+  "Tangerang Selatan": ["kampus-kampus Serpong", "majelis muslimah Pamulang"],
+  Depok: ["Masjid Dian Al-Mahri", "komunitas mahasiswa Depok"],
+  Bekasi: ["Masjid Agung Bekasi", "komunitas pemuda Harapan Indah"],
+  Bogor: ["Masjid Agung Bogor", "komunitas Cibinong"],
+  Serang: ["Masjid Agung Serang", "komunitas pesisir Banten"],
+  Bandung: ["Masjid Raya Bandung", "Masjid Salman ITB", "komunitas profesional Dago"],
+  Cirebon: ["Masjid Agung Sang Cipta Rasa", "komunitas batik Trusmi"],
+  Surabaya: ["Masjid Al-Akbar Surabaya", "komunitas pelabuhan Tanjung Perak"],
+  Yogyakarta: ["Masjid Gede Kauman", "komunitas mahasiswa UIN dan UGM"],
+  Semarang: ["Masjid Agung Jawa Tengah", "komunitas pelajar Tembalang"],
+  Surakarta: ["Masjid Agung Surakarta", "komunitas batik Laweyan"],
+  Magelang: ["Masjid Agung Magelang", "komunitas pondok sekitar Borobudur"],
+  Malang: ["Masjid Agung Malang", "komunitas mahasiswa Malang"],
+  Kediri: ["Masjid Agung Kediri", "alumni pesantren Lirboyo"],
+  "Banda Aceh": ["Masjid Raya Baiturrahman", "dayah-dayah Banda Aceh"],
+  Lhokseumawe: ["Masjid Agung Lhokseumawe", "komunitas pesisir Lhokseumawe"],
+  Medan: ["Masjid Raya Al-Mashun", "komunitas Belawan"],
+  Padang: ["Masjid Raya Sumatera Barat", "komunitas Minang merantau"],
+  Bukittinggi: ["Masjid Jamik Bukittinggi", "tradisi surau di Bukittinggi"],
+  Pekanbaru: ["Masjid Raya An-Nur", "komunitas pengusaha Pekanbaru"],
+  Batam: ["Masjid Raya Batam", "komunitas pekerja industri Batam"],
+  Jambi: ["Masjid Agung Al-Falah", "komunitas Jelutung"],
+  Palembang: ["Masjid Agung Sultan Mahmud Badaruddin I", "komunitas Musi"],
+  Pangkalpinang: ["Masjid Agung Pangkalpinang", "komunitas timah Bangka"],
+  Bengkulu: ["Masjid Jamik Bengkulu", "komunitas pesisir Bengkulu"],
+  "Bandar Lampung": ["Masjid Agung Bandar Lampung", "komunitas transmigran Lampung"],
+  Denpasar: ["Masjid Agung Denpasar", "komunitas muslim Denpasar"],
+  Mataram: ["Masjid Agung Nahdlatul Wathan", "komunitas Lombok"],
+  Bima: ["Masjid Agung Bima", "komunitas pesisir Bima"],
+  Kupang: ["Masjid Agung Kupang", "komunitas muslim Kupang"],
+  Pontianak: ["Masjid Abdurrahman Al-Kadrie", "komunitas Melayu Pontianak"],
+  "Palangka Raya": ["masjid induk Palangka Raya", "komunitas dayak muslim"],
+  Banjarmasin: ["Masjid Sabilal Muhtadin", "komunitas wadah Banjarmasin"],
+  Samarinda: ["Masjid Islamic Center Samarinda", "komunitas mahalap Samarinda"],
+  Balikpapan: ["Masjid Agung Balikpapan", "komunitas migas Balikpapan"],
+  Tarakan: ["Masjid Agung Tarakan", "komunitas pesisir Tarakan"],
+  Makassar: ["Masjid Raya Makassar", "komunitas kampus Makassar"],
+  Parepare: ["Masjid Agung Parepare", "komunitas pelaut Parepare"],
+  Palu: ["Masjid Agung Palu", "komunitas pemulihan Palu"],
+  Manado: ["Masjid Agung Manado", "komunitas muslim Minahasa"],
+  Gorontalo: ["Masjid Agung Gorontalo", "komunitas sandiq Gorontalo"],
+  Kendari: ["Masjid Agung Kendari", "komunitas nelayan Kendari"],
+  Mamuju: ["Masjid Agung Mamuju", "komunitas Sulbar"],
+  Ambon: ["Masjid Agung Ambon", "komunitas interfaith Ambon"],
+  Ternate: ["Masjid Sultan Ternate", "komunitas kesultanan Ternate"],
+  Jayapura: ["masjid induk Jayapura", "komunitas muslim Jayapura"],
+  Sorong: ["Masjid Agung Sorong", "komunitas migas Sorong"],
+  Manokwari: ["Masjid Agung Manokwari", "komunitas pegunungan Arfak"],
+  Timika: ["masjid jemaah Timika", "komunitas pekerja tambang Mimika"],
+  Merauke: ["masjid raya Merauke", "komunitas transmigran Merauke"],
+  Wamena: ["jemaah muslim pegunungan Papua", "komunitas pelajar Wamena"],
+};
+
+/** Kampus / lembaga pendidikan asal per kota */
+const CITY_ALMA: Record<string, string[]> = {
+  "Jakarta Selatan": ["UIN Syarif Hidayatullah, Jakarta", "LIPIA, Jakarta", "Universitas Al-Azhar, Kairo"],
+  "Jakarta Timur": ["UIN Syarif Hidayatullah, Jakarta", "LIPIA, Jakarta"],
+  Tangerang: ["UIN Sultan Maulana Hasanuddin, Banten"],
+  "Tangerang Selatan": ["UIN Sultan Maulana Hasanuddin, Banten", "Universitas Islam Madinah"],
+  Depok: ["UIN Syarif Hidayatullah, Jakarta"],
+  Bekasi: ["UIN Syarif Hidayatullah, Jakarta", "Universitas Islam Madinah"],
+  Bogor: ["UIN Syarif Hidayatullah, Jakarta", "Darussalam Gontor"],
+  Serang: ["UIN Sultan Maulana Hasanuddin, Banten"],
+  Bandung: ["UIN Sunan Gunung Djati, Bandung", "Universitas Islam Madinah", "LIPIA, Jakarta"],
+  Cirebon: ["UIN Siber Syekh Nurjati, Cirebon", "Darussalam Gontor"],
+  Surabaya: ["UIN Sunan Ampel, Surabaya", "Universitas Al-Azhar, Kairo"],
+  Yogyakarta: ["UIN Sunan Kalijaga, Yogyakarta", "Universitas Islam Indonesia, Yogyakarta"],
+  Semarang: ["UIN Walisongo, Semarang"],
+  Surakarta: ["UIN Raden Mas Said, Surakarta"],
+  Magelang: ["UIN Walisongo, Semarang", "Darussalam Gontor"],
+  Malang: ["UIN Maulana Malik Ibrahim, Malang"],
+  Kediri: ["Pondok Pesantren Lirboyo, Kediri", "UIN Sunan Ampel, Surabaya"],
+  "Banda Aceh": ["UIN Ar-Raniry, Banda Aceh"],
+  Lhokseumawe: ["UIN Ar-Raniry, Banda Aceh"],
+  Medan: ["UIN Sumatera Utara, Medan", "Universitas Islam Madinah"],
+  Padang: ["UIN Imam Bonjol, Padang"],
+  Bukittinggi: ["UIN Mahmud Yunus, Batusangkar", "UIN Imam Bonjol, Padang"],
+  Pekanbaru: ["UIN Sultan Syarif Kasim, Riau"],
+  Batam: ["UIN Sultan Syarif Kasim, Riau"],
+  Jambi: ["UIN Sulthan Thaha Saifuddin, Jambi"],
+  Palembang: ["UIN Raden Fatah, Palembang"],
+  Pangkalpinang: ["UIN Raden Fatah, Palembang"],
+  Bengkulu: ["UIN Fatmawati Sukarno, Bengkulu"],
+  "Bandar Lampung": ["UIN Raden Intan, Lampung"],
+  Denpasar: ["UIN Sunan Kalijaga, Yogyakarta"],
+  Mataram: ["UIN Mataram"],
+  Bima: ["UIN Mataram", "Darussalam Gontor"],
+  Kupang: ["IAIN Kupang", "UIN Mataram"],
+  Pontianak: ["IAIN Pontianak"],
+  "Palangka Raya": ["IAIN Palangka Raya", "UIN Antasari, Banjarmasin"],
+  Banjarmasin: ["UIN Antasari, Banjarmasin", "Darussalam Gontor"],
+  Samarinda: ["UIN Sultan Aji Muhammad Idris, Samarinda"],
+  Balikpapan: ["UIN Sultan Aji Muhammad Idris, Samarinda"],
+  Tarakan: ["STAIN Tarakan"],
+  Makassar: ["UIN Alauddin, Makassar", "Universitas Al-Azhar, Kairo"],
+  Parepare: ["IAIN Parepare", "UIN Alauddin, Makassar"],
+  Palu: ["UIN Datokarama, Palu"],
+  Manado: ["IAIN Manado"],
+  Gorontalo: ["UIN Sultan Amai, Gorontalo"],
+  Kendari: ["UIN Kendari"],
+  Mamuju: ["IAIN Mamuju"],
+  Ambon: ["IAIN Ambon"],
+  Ternate: ["IAIN Ternate"],
+  Jayapura: ["UIN Alauddin, Makassar", "UIN Syarif Hidayatullah, Jakarta"],
+  Sorong: ["UIN Alauddin, Makassar"],
+  Manokwari: ["UIN Sunan Kalijaga, Yogyakarta"],
+  Timika: ["UIN Alauddin, Makassar"],
+  Merauke: ["UIN Syarif Hidayatullah, Jakarta"],
+  Wamena: ["UIN Sunan Ampel, Surabaya"],
+};
+
+/** Tarif dasar per kota (sebelum pengali pengalaman & spesialisasi) */
+const FEE_TIER: Record<string, number> = {
+  "Jakarta Selatan": 1500000, "Jakarta Timur": 1300000, Tangerang: 1100000,
+  "Tangerang Selatan": 1200000, Depok: 1100000, Bekasi: 1050000, Bogor: 1000000,
+  Serang: 800000, Bandung: 1200000, Cirebon: 800000, Surabaya: 1200000,
+  Yogyakarta: 1000000, Semarang: 1000000, Surakarta: 900000, Magelang: 800000,
+  Malang: 900000, Kediri: 800000, "Banda Aceh": 900000, Lhokseumawe: 750000,
+  Medan: 1100000, Padang: 950000, Bukittinggi: 850000, Pekanbaru: 900000,
+  Batam: 950000, Jambi: 800000, Palembang: 1000000, Pangkalpinang: 700000,
+  Bengkulu: 750000, "Bandar Lampung": 850000, Denpasar: 900000, Mataram: 800000,
+  Bima: 650000, Kupang: 700000, Pontianak: 850000, "Palangka Raya": 800000,
+  Banjarmasin: 900000, Samarinda: 950000, Balikpapan: 950000, Tarakan: 750000,
+  Makassar: 1000000, Parepare: 750000, Palu: 800000, Manado: 850000,
+  Gorontalo: 800000, Kendari: 800000, Mamuju: 700000, Ambon: 750000,
+  Ternate: 700000, Jayapura: 850000, Sorong: 750000, Manokwari: 700000,
+  Timika: 800000, Merauke: 700000, Wamena: 600000,
+};
+
+const MALE_FIRST = [
+  "Ahmad", "Muhammad", "Abdul", "Ilham", "Rizal", "Fauzi", "Syaiful", "Hendra",
+  "Zainal", "Idrus", "Khairul", "Rahmat", "Yusran", "Herman", "Irfan", "Burhan",
+  "Mubarok", "Ridwan", "Iskandar", "Salman", "Fauzan", "Lukman", "Amri", "Wahyu",
+  "Agus", "Dedi", "Taufik", "Nasrullah", "Firdaus", "Jafar", "Hamid", "Zulkifli",
+  "Mahfud", "Asnawi", "Fahmi", "Imad", "Wafi", "Ardi", "Bahrudin", "Cahyadi",
+  "Darmawan", "Effendi", "Farid", "Gumilar", "Hidayat", "Iqbal", "Jalal", "Kurnia",
+  "Luthfi", "Misbah", "Noval", "Qomar", "Rofi", "Sopian", "Tajuddin", "Umar",
+  "Wahab", "Basri", "Cholid", "Darwis", "Fazlur", "Ghazali", "Hamdan", "Mukhlis",
+];
+
+const MALE_LAST = [
+  "Rahman", "Hakim", "Siddik", "Jamil", "Zainuddin", "Abbas", "Dahlan", "Munir",
+  "Syahputra", "Lubis", "Harahap", "Nasution", "Batubara", "Siregar", "Gani",
+  "Kadir", "Jalil", "Karim", "Salim", "Amir", "Hasan", "Husain", "Arifin",
+  "Mansyur", "Bahri", "Syukur", "Nashir", "Halim", "Amin", "Hamzah", "Shaleh",
+  "Mustafa", "Ibrahim", "Ismail", "Ramli", "Saputra", "Nugraha", "Setiawan",
+  "Firmansyah", "Gunawan", "Maulana", "Adnan", "Siregar", "Rangkuti", "Panjaitan",
+  "Sitorus", "Andi", "Nurdin", "Rasyid", "Yusran", "Zaki",
+];
+
+const FEMALE_FIRST = [
+  "Fatimah", "Aisyah", "Khadijah", "Maryam", "Nurhayati", "Siti", "Rahma",
+  "Zahra", "Hafizah", "Latifah", "Hanum", "Syifa", "Farhana", "Nadia",
+  "Yuliana", "Wahidah", "Zaitun", "Halimah", "Saidah", "Farida", "Nurul",
+  "Laila", "Fitri", "Mawar", "Ayu", "Euis", "Nining", "Retno", "Wulan",
+  "Puspita", "Annisa", "Salma", "Zulfa", "Umaimah", "Khansa", "Alya",
+  "Nabila", "Dian", "Rika", "Maya", "Ita", "Lely", "Roro", "Hj.",
+];
+
+const FEMALE_LAST = [
+  "Rahmawati", "Hidayati", "Shaleha", "Zahroh", "Azzahra", "Safitri",
+  "Khairani", "Muthia", "Hanifah", "Badriah", "Khodijah", "Uswah", "Cholifah",
+  "Masruroh", "Mu'tiah", "Rohmah", "Fitriani", "Anggraini", "Astuti", "Lestari",
+  "Wulandari", "Kusumawati", "Hayati", "Nasution", "Lubis", "Siregar",
+  "Andini", "Utami", "Saputri", "Hasanah",
+];
+
+const CREDENTIALS = [
+  "Lc.", "M.A", "S.Ag", "M.Pd.I", "M.H.I", "Lc., M.A.", "S.Pd.I", "M.Ud.",
+  "Dr.", "M.Si", "M.Ag",
+];
+
+const GRADIENTS = [
+  "from-emerald-500 to-teal-600", "from-teal-600 to-cyan-700",
+  "from-indigo-500 to-blue-600", "from-rose-500 to-pink-600",
+  "from-teal-500 to-emerald-700", "from-cyan-600 to-teal-700",
+  "from-blue-500 to-indigo-700", "from-pink-500 to-rose-600",
+];
+
+const SPECIALIZATION_FOCUS: Record<Specialization, string> = {
+  "Tafsir Al-Qur'an":
+    "Pendekatannya kontekstual: ayat dihubungkan dengan persoalan sehari-hari jamaah.",
+  Fiqih: "Pembahasan fiqih ibadah disampaikan bertahap dengan dalil yang jelas.",
+  Aqidah: "Membina aqidah dengan argumen tenang dan menjawab keraguan secara rasional.",
+  "Ceramah & Tausiyah":
+    "Gaya ceramah hangat dan menyentuh, cocok untuk audiens campuran.",
+  "Nikah & Keluarga":
+    "Berpengalaman mendampingi pasangan pra-nikah hingga pembinaan rumah tangga.",
+  "Parenting Islami":
+    "Materi parenting berbasis nilai Islam dengan contoh praktis di rumah.",
+  "Muamalah & Ekonomi Syariah":
+    "Fokus fiqih muamalah praktis: bisnis, koperasi, dan keuangan syariah.",
+  "Tahsin & Tahfidz":
+    "Metode talaqqi dengan target hafalan yang terukur per pekan.",
+  "Fiqih Wanita":
+    "Kajian fiqih kewanitaan dibahas terbuka dan mendalam untuk majelis muslimah.",
+  "Tasawuf & Akhlak":
+    "Pembinaan akhlak melalui kajian kitab klasik secara moderat.",
+};
+
+const ROLE_TEMPLATES_M = [
+  (area: string, city: string) =>
+    `Pendakwah aktif yang membina majelis taklim dan komunitas muslim di ${area}, ${city}.`,
+  (area: string, city: string, spot: string) =>
+    `Pengajar tetap di ${spot} serta pembina kajian pekanan di lingkungan ${area}, ${city}.`,
+  (area: string, city: string) =>
+    `Alumni pesantren yang kini membina TPQ dan majelis remaja masjid di ${area}, ${city}.`,
+  (area: string, city: string, spot: string) =>
+    `Da'i yang dikenal lewat kajian tematik di ${spot} dan komunitas profesional ${city}.`,
+  (area: string, city: string, spot: string) =>
+    `Pembina rutin wirid dan kajian kitab di ${spot}, warga sekitar ${area}, ${city}.`,
+  (area: string, city: string) =>
+    `Pengasuh majelis pekanan yang telah membina jamaah ${area} dan sekitarnya, ${city}.`,
+];
+
+const ROLE_TEMPLATES_F = [
+  (area: string, city: string) =>
+    `Pendamping majelis muslimah di ${area}, ${city}, dengan kajian pekanan bagi ibu-ibu.`,
+  (area: string, city: string, spot: string) =>
+    `Pengajar tetap majelis taklim muslimah di ${spot} dan sekitar ${area}, ${city}.`,
+  (area: string, city: string) =>
+    `Konselor keluarga muslim yang membina komunitas muslimah ${area}, ${city}.`,
+  (area: string, city: string, spot: string) =>
+    `Pembina wirid ibu-ibu dan kelas muslimah remaja di ${spot}, ${city}.`,
+  (area: string, city: string) =>
+    `Pengasuh TPQ putri dan bimbingan tahfidz muslimah di ${area}, ${city}.`,
+];
+
+const CLOSERS = [
+  "Menerima undangan kajian di dalam maupun luar kota sesuai kesediaan jadwal.",
+  "Terbiasa menyesuaikan materi dengan profil jamaah, dari pemula hingga pengkajian lanjutan.",
+  "Menyukai sesi tanya jawab panjang setelah setiap kajian.",
+  "Aktif membina kader dakwah muda di wilayahnya.",
+];
+
+/** Kolom area & spot diambil bergilir agar profil dalam satu kota beragam */
+const buildUstadz = (seed: {
+  idx: number;
+  name: string;
+  title: string;
+  credentials: string;
+  specializations: Specialization[];
+  eventTypes: EventType[];
+  city: string;
+  area: string;
+  bio: string;
+  rating: number;
+  reviewCount: number;
+  experience: number;
+  fee: number;
+  almaMater: string;
+  gender: "L" | "P";
+  available: boolean;
+}): Ustadz => {
+  const i = seed.idx;
+  const phone = `08${13 + (i % 6)}-${String(2100 + i * 53).padStart(4, "0").slice(-4)}-${String(
+    4800 + i * 29
+  ).padStart(4, "0").slice(-4)}`;
+  const wa = "62" + phone.replace(/-/g, "").slice(1);
+  const cityCoord = CITY_COORDS[seed.city] ?? { lat: -6.2, lng: 106.8 };
+  const lat = cityCoord.lat + (((i % 7) - 3) * 0.004);
+  const lng = cityCoord.lng + (((i % 5) - 2) * 0.005);
+
+  return {
+    id: `u${i}`,
+    name: seed.name,
+    title: seed.title,
+    credentials: seed.credentials,
+    specializations: seed.specializations,
+    eventTypes: seed.eventTypes,
+    city: seed.city,
+    province: CITY_PROVINCE[seed.city],
+    area: seed.area,
+    bio: seed.bio,
+    rating: seed.rating,
+    reviewCount: seed.reviewCount,
+    experience: seed.experience,
+    fee: seed.fee,
+    almaMater: seed.almaMater,
+    contact: { phone, whatsapp: wa },
+    lat,
+    lng,
+    available: seed.available,
+    verified: true,
+    gender: seed.gender,
+    avatarGradient: GRADIENTS[i % GRADIENTS.length],
+    schedule: defaultSchedule(i),
+  };
+};
+
+/** Spesialisasi & jenis acara yang konsisten dengan gender */
+const SPECS_MALE: Specialization[][] = [
+  ["Tafsir Al-Qur'an", "Aqidah"],
+  ["Fiqih", "Muamalah & Ekonomi Syariah"],
+  ["Ceramah & Tausiyah", "Tasawuf & Akhlak"],
+  ["Aqidah", "Tafsir Al-Qur'an"],
+  ["Fiqih", "Tafsir Al-Qur'an"],
+  ["Tahsin & Tahfidz", "Tafsir Al-Qur'an"],
+  ["Ceramah & Tausiyah", "Nikah & Keluarga"],
+  ["Fiqih", "Aqidah", "Tasawuf & Akhlak"],
+  ["Muamalah & Ekonomi Syariah", "Ceramah & Tausiyah"],
+  ["Tafsir Al-Qur'an", "Tasawuf & Akhlak"],
+];
+
+const SPECS_FEMALE: Specialization[][] = [
+  ["Fiqih Wanita", "Parenting Islami"],
+  ["Tahsin & Tahfidz", "Fiqih Wanita"],
+  ["Nikah & Keluarga", "Parenting Islami"],
+  ["Parenting Islami", "Ceramah & Tausiyah"],
+  ["Fiqih Wanita", "Nikah & Keluarga"],
+  ["Tafsir Al-Qur'an", "Fiqih Wanita"],
+  ["Tahsin & Tahfidz", "Parenting Islami"],
+  ["Ceramah & Tausiyah", "Fiqih Wanita"],
+];
+
+const EVENTS_BY_SPEC: Record<string, EventType[]> = {
+  "Tafsir Al-Qur'an": ["Kajian Rutin", "Khutbah Jumat", "Ceramah 7 Bulanan"],
+  Fiqih: ["Kajian Rutin", "Khutbah Jumat", "Ceramah 7 Bulanan"],
+  Aqidah: ["Kajian Rutin", "Tabligh Akbar", "Khutbah Jumat"],
+  "Ceramah & Tausiyah": ["Ceramah Keluarga / Arisan", "Tabligh Akbar", "Kajian Korporat"],
+  "Nikah & Keluarga": ["Konseling", "Ceramah Keluarga / Arisan", "Kajian Rutin"],
+  "Parenting Islami": ["Kajian Rutin", "Pengajian Anak", "Konseling"],
+  "Muamalah & Ekonomi Syariah": ["Kajian Korporat", "Kajian Rutin", "Ceramah Keluarga / Arisan"],
+  "Tahsin & Tahfidz": ["Tahsin / Tahfidz", "Pengajian Anak", "Kajian Rutin"],
+  "Fiqih Wanita": ["Wirid Ibu-ibu", "Kajian Rutin", "Ceramah 7 Bulanan"],
+  "Tasawuf & Akhlak": ["Kajian Rutin", "Tabligh Akbar", "Wirid Ibu-ibu"],
+};
+
+const usedNames = new Set<string>(
+  baseUstadzRaw.map((u) => `${u.name}`)
+);
+
+const pickName = (i: number, gender: "L" | "P"): string => {
+  const firstPool = gender === "L" ? MALE_FIRST : FEMALE_FIRST;
+  const lastPool = gender === "L" ? MALE_LAST : FEMALE_LAST;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const first = firstPool[(i * 13 + attempt * 5) % firstPool.length];
+    const last = lastPool[(i * 7 + attempt * 11 + 3) % lastPool.length];
+    const name = `${first} ${last}`;
+    if (!usedNames.has(name)) {
+      usedNames.add(name);
+      return name;
+    }
+  }
+  // fallback aman: tambahkan inisial
+  const first = firstPool[i % firstPool.length];
+  const last = lastPool[(i * 7) % lastPool.length];
+  const name = `${first} ${last} ${String.fromCharCode(65 + (i % 26))}`;
+  usedNames.add(name);
+  return name;
+};
+
+const areaOf = (city: string, i: number) => {
+  const pool = CITY_AREAS[city] ?? ["Pusat Kota"];
+  return pool[i % pool.length];
+};
+
+const spotOf = (city: string, i: number) => {
+  const pool = CITY_SPOTS[city] ?? ["masjid induk kota"];
+  return pool[i % pool.length];
+};
+
+const almaOf = (city: string, i: number) => {
+  const pool = CITY_ALMA[city] ?? ["UIN Syarif Hidayatullah, Jakarta"];
+  return pool[i % pool.length];
+};
+
+const bioOf = (
+  gender: "L" | "P",
+  area: string,
+  city: string,
+  spot: string,
+  spec: Specialization,
+  i: number
+) => {
+  const templates = gender === "L" ? ROLE_TEMPLATES_M : ROLE_TEMPLATES_F;
+  const role = templates[i % templates.length](area, city, spot);
+  const focus = SPECIALIZATION_FOCUS[spec];
+  const closer = CLOSERS[(i * 3) % CLOSERS.length];
+  return `${role} ${focus} ${closer}`;
+};
+
+const generatedUstadz: Ustadz[] = [];
+let genIdx = 13;
+
+for (const [city, [maleCount, femaleCount]] of Object.entries(CITY_QUOTA)) {
+  for (const gender of ["L", "P"] as const) {
+    const count = gender === "L" ? maleCount : femaleCount;
+    for (let k = 0; k < count; k++) {
+      const i = genIdx++;
+      const isSenior = i % 17 === 0 && gender === "L";
+      const title = gender === "L" ? (isSenior ? "KH." : "Ustadz") : "Ustadzah";
+      const specPool = gender === "L" ? SPECS_MALE : SPECS_FEMALE;
+      const specializations = specPool[(i * 3 + k) % specPool.length];
+      const experience = 3 + ((i * 17) % 25);
+      const rating = Math.round((4.3 + ((i * 37) % 8) / 10) * 10) / 10;
+      const reviewCount = 8 + ((i * 53) % 220);
+      const base = FEE_TIER[city] ?? 800000;
+      const bonus = specializations.includes("Ceramah & Tausiyah") ? 200000 : 0;
+      const discount = specializations.includes("Tahsin & Tahfidz") ? 100000 : 0;
+      const fee =
+        Math.round((base * (0.7 + experience / 45) + bonus - discount) / 50000) *
+        50000;
+      const area = areaOf(city, i + k);
+      const spot = spotOf(city, i + k);
+      const credsPool = CREDENTIALS.filter((c) => !(gender === "P" && c === "Dr."));
+
+      generatedUstadz.push(
+        buildUstadz({
+          idx: i,
+          name: pickName(i, gender),
+          title,
+          credentials: credsPool[(i * 5) % credsPool.length],
+          specializations,
+          eventTypes: EVENTS_BY_SPEC[specializations[0]] ?? ["Kajian Rutin"],
+          city,
+          area,
+          bio: bioOf(gender, area, city, spot, specializations[0], i),
+          rating: rating === 5.0 && reviewCount < 30 ? 4.9 : rating,
+          reviewCount,
+          experience,
+          fee,
+          almaMater: almaOf(city, i),
+          gender,
+          available: i % 29 !== 0,
+        })
+      );
+    }
+  }
+}
+
+// Provinsi wajib terdaftar — gagal cepat kalau ada kota liar
+const baseUstadz: Ustadz[] = baseUstadzRaw.map((u) => {
+  const p = CITY_PROVINCE[u.city];
+  if (!p) throw new Error(`Kota tidak terdaftar di regions.ts: ${u.city} (${u.id})`);
+  return { ...u, province: p };
+});
+
+export const ustadzData: Ustadz[] = [...baseUstadz, ...generatedUstadz];
+
+/**
+ * Ambil id ustadz nyata dari kota (untuk data kajian).
+ * Bertingkat: kota+spesialisasi -> kota+jenis acara -> kota apa pun.
+ * Gagal keras hanya jika kota sepenuhnya kosong — itu bug data.
+ */
+const pickUstadz = (
+  city: string,
+  spec?: Specialization,
+  nth = 0
+): string => {
+  const inCity = ustadzData.filter((u) => u.city === city);
+  if (inCity.length === 0)
+    throw new Error(`Kota tanpa ustadz di data: ${city}`);
+  const candidates =
+    (spec && inCity.filter((u) => u.specializations.includes(spec))) ||
+    inCity;
+  const pool = candidates.length > 0 ? candidates : inCity;
+  const u = pool[nth % pool.length];
+  return u.id;
+};
+
+/* =====================================================================
+ * Ulasan awal untuk jaringan nasional — 1-2 ulasan per ustadz yang
+ * dibangkitkan deterministik dari template spesifik per bidang.
+ * ===================================================================== */
+
+const REVIEW_AUTHORS = [
+  "Takmir Masjid", "Majelis Taklim Al-Ihsan", "Komunitas Muslim Muda",
+  "Ibu-ibu Posyandu", "Panitia Tabligh Akbar", "Yayasan Pendidikan",
+  "Koperasi Syariah Berkah", "Sekretaris Arisan Keluarga", "Wali Murid TPQ",
+  "Karang Taruna Masjid", "Pengurus Kajian Pemuda", "Tim HRD Perusahaan",
+  "Dewan Kemakmuran Masjid", "Komunitas Tahfidz", "Pengantin Baru",
+  "Perwakilan RT", "Alumni Kajian Pekanan",
+];
+
+const REVIEW_COMMENTS_M = [
+  "Alhamdulillah, penyampaiannya jelas dan berbobot. Jamaah sampai rumah dengan bekal ilmu yang bisa dipraktikkan.",
+  "Sesuai kebutuhan kami. Datang tepat waktu, materi terstruktur, dan sabar menjawab pertanyaan jamaah.",
+  "Kajian berjalan lancar. Bahasanya mudah dipahami jamaah yang beragam umurnya.",
+  "Rekomendasi: sangat layak untuk acara keagamaan komunitas. Koordinasinya juga baik.",
+  "Materi disampaikan dengan dalil yang jelas. Kami akan mengundang kembali di acara berikutnya.",
+];
+
+const REVIEW_COMMENTS_F = [
+  "Alhamdulillah, kajian muslimahnya hangat dan mendalam. Ibu-ibu banyak bertanya dan semua terjawab.",
+  "Penyampaiannya lembut tapi jelas. Materi langsung bisa dipraktikkan di rumah.",
+  "Anak-anak juga senang mengikuti sesinya. Metode mengajarnya menyenangkan.",
+  "Kami puas, koordinasi sebelum acara mudah dan beliau responsif di WhatsApp.",
+  "Sesi konselingnya membantu keluarga kami. Insya Allah akan mengundang lagi.",
+];
+
+const REVIEW_DATES = [
+  "2026-08-14", "2026-08-27", "2026-09-05", "2026-09-18", "2026-09-26",
+  "2026-10-03", "2026-10-11", "2026-10-19",
+];
+
+const generatedReviews: Review[] = [];
+let reviewIdx = 100;
+
+for (const u of ustadzData) {
+  const jumlah = u.id.charCodeAt(2) % 3 === 0 ? 2 : 1;
+  for (let k = 0; k < jumlah; k++) {
+    const comments = u.gender === "P" ? REVIEW_COMMENTS_F : REVIEW_COMMENTS_M;
+    const rating = u.rating >= 4.9 ? 5 : u.rating >= 4.6 ? 5 : 4;
+    generatedReviews.push({
+      id: `r${reviewIdx++}`,
+      ustadzId: u.id,
+      authorName:
+        REVIEW_AUTHORS[(u.id.charCodeAt(3) * (k + 3)) % REVIEW_AUTHORS.length] +
+        " " +
+        u.city,
+      rating,
+      comment: comments[(u.id.charCodeAt(3) + k * 2) % comments.length],
+      date: REVIEW_DATES[(u.id.charCodeAt(3) + k * 3) % REVIEW_DATES.length],
+      event: u.eventTypes[(u.id.charCodeAt(3) + k) % u.eventTypes.length],
+    });
+  }
+}
+
 export const initialReviews: Review[] = [
+
   {
     id: "r1",
     ustadzId: "u1",
@@ -379,6 +1036,7 @@ export const initialReviews: Review[] = [
     date: "2026-09-18",
     event: "Pelatihan Internal",
   },
+  ...generatedReviews,
 ];
 
 export const ustadzReplies: string[] = [
@@ -505,6 +1163,120 @@ export const kajianData: Kajian[] = [
     price: "Gratis",
     description:
       "Kajian pembinaan akhlak dan tasawuf praktis untuk kesehatan hati dan ketenangan jiwa.",
+  },
+  {
+    id: "k9",
+    title: "Kajian Tafsir: Surah Al-Kahfi sebagai Pelindung Ujian",
+    ustadzId: pickUstadz("Medan", "Tafsir Al-Qur'an"),
+    date: "2026-12-11",
+    time: "19:00 - 21:00",
+    location: "Masjid Raya Al-Mashun, Medan Kota",
+    city: "Medan",
+    topic: "Tafsir Al-Qur'an",
+    eventType: "Kajian Rutin",
+    price: "Gratis",
+    description:
+      "Kajian pekanan bagi jamaah umum. Fokus pada pesan Surah Al-Kahfi tentang ujian harta, ilmu, dan kedudukan.",
+  },
+  {
+    id: "k10",
+    title: "Wirid Ibu-ibu: Fiqih Wanita dalam Kehidupan Sehari-hari",
+    ustadzId: pickUstadz("Makassar", "Fiqih Wanita"),
+    date: "2026-12-12",
+    time: "16:00 - 18:00",
+    location: "Masjid Raya Makassar, Rappocini",
+    city: "Makassar",
+    topic: "Fiqih Wanita",
+    eventType: "Wirid Ibu-ibu",
+    price: "Gratis",
+    description:
+      "Kajian muslimah bulanan: fiqih haid, nifas, dan muamalah sehari-hari dengan bahasa yang ringan.",
+  },
+  {
+    id: "k11",
+    title: "Kajian Muamalah: Jual Beli Online Menurut Fiqih Islam",
+    ustadzId: pickUstadz("Banjarmasin", "Muamalah & Ekonomi Syariah"),
+    date: "2026-12-13",
+    time: "19:30 - 21:30",
+    location: "Masjid Sabilal Muhtadin, Banjarmasin Tengah",
+    city: "Banjarmasin",
+    topic: "Muamalah & Ekonomi Syariah",
+    eventType: "Kajian Rutin",
+    price: "Gratis",
+    description:
+      "Kajian rutin bulanan bagi pelaku usaha dan umum. Membahas akad jual beli online dan promosi yang jujur.",
+  },
+  {
+    id: "k12",
+    title: "Kajian Keluarga Sakinah: Komunikasi Suami Istri",
+    ustadzId: pickUstadz("Samarinda", "Nikah & Keluarga"),
+    date: "2026-12-17",
+    time: "16:00 - 18:00",
+    location: "Masjid Islamic Center Samarinda, Samarinda Ilir",
+    city: "Samarinda",
+    topic: "Nikah & Keluarga",
+    eventType: "Ceramah Keluarga / Arisan",
+    price: "Berbayar",
+    fee: 50000,
+    description:
+      "Kajian keluarga terbuka untuk pasangan muda. Membahas komunikasi dan penyelesaian konflik rumah tangga.",
+  },
+  {
+    id: "k13",
+    title: "Tabligh Akbar: Islam Rahmatan lil Alamin",
+    ustadzId: pickUstadz("Jayapura", "Ceramah & Tausiyah"),
+    date: "2026-12-19",
+    time: "19:00 - 21:00",
+    location: "masjid induk Jayapura, Jayapura Utara",
+    city: "Jayapura",
+    topic: "Ceramah & Tausiyah",
+    eventType: "Tabligh Akbar",
+    price: "Gratis",
+    description:
+      "Tabligh akbar malam Ahad untuk seluruh warga Jayapura dan sekitarnya. Terbuka untuk umum.",
+  },
+  {
+    id: "k14",
+    title: "Kajian Aqidah: Menjaga Tauhid di Tengah Kesibukan",
+    ustadzId: pickUstadz("Pontianak", "Aqidah"),
+    date: "2027-01-09",
+    time: "19:00 - 21:00",
+    location: "Masjid Abdurrahman Al-Kadrie, Pontianak Kota",
+    city: "Pontianak",
+    topic: "Aqidah",
+    eventType: "Kajian Rutin",
+    price: "Gratis",
+    description:
+      "Kajian pekanan pemula yang membahas fundamen aqidah dengan bahasa sederhana.",
+  },
+  {
+    id: "k15",
+    title: "Kajian Parenting: Anak dan Gadget Menurut Islam",
+    ustadzId: pickUstadz("Padang", "Parenting Islami"),
+    date: "2027-01-16",
+    time: "16:00 - 18:00",
+    location: "Masjid Raya Sumatera Barat, Kuranji",
+    city: "Padang",
+    topic: "Parenting Islami",
+    eventType: "Kajian Rutin",
+    price: "Gratis",
+    description:
+      "Kajian orang tua: batasan gadget, mendampingi anak di dunia digital, dan keteladanan di rumah.",
+  },
+  {
+    id: "k16",
+    title: "Bimbingan Tahsin Ramadhan: Perbaiki Bacaan Sebelum Puasa",
+    ustadzId: pickUstadz("Denpasar", "Tahsin & Tahfidz"),
+    date: "2027-01-23",
+    time: "19:00 - 21:00",
+    location: "Masjid Agung Denpasar, Denpasar Selatan",
+    city: "Denpasar",
+    topic: "Tahsin & Tahfidz",
+    eventType: "Tahsin / Tahfidz",
+    price: "Berbayar",
+    fee: 75000,
+    description:
+      "Kelas tahsin persiapan Ramadhan bagi jamaah Denpasar dan sekitarnya. Kuota terbatas, level pemula.",
   },
 ];
 

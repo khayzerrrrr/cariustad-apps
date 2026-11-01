@@ -45,6 +45,7 @@ export interface Ustadz {
   specializations: Specialization[];
   eventTypes: EventType[];
   city: string;
+  province: string;
   area: string;
   bio: string;
   rating: number;
@@ -165,34 +166,16 @@ export const ALL_EVENT_TYPES: EventType[] = [
   "Tahsin / Tahfidz",
 ];
 
-export const ALL_CITIES: string[] = [
-  "Jakarta Selatan",
-  "Jakarta Timur",
-  "Bandung",
-  "Bogor",
-  "Depok",
-  "Tangerang",
-  "Bekasi",
-  "Surabaya",
-  "Yogyakarta",
-  "Semarang",
-  "Makassar",
-];
+import { CITY_INFO, ALL_PROVINCES } from "./regions";
+
+export { ALL_PROVINCES };
+
+// Daftar kota & koordinat diturunkan dari data wilayah (src/lib/regions.ts)
+export const ALL_CITIES: string[] = CITY_INFO.map((c) => c.city);
 
 // Koordinat untuk perhitungan jarak & kiblat (referensi kota)
-export const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  "Jakarta Selatan": { lat: -6.2614, lng: 106.8105 },
-  "Jakarta Timur": { lat: -6.225, lng: 106.9 },
-  Bandung: { lat: -6.9175, lng: 107.6191 },
-  Bogor: { lat: -6.595, lng: 106.8166 },
-  Depok: { lat: -6.4048, lng: 106.7942 },
-  Tangerang: { lat: -6.1783, lng: 106.6319 },
-  Bekasi: { lat: -6.2349, lng: 106.9896 },
-  Surabaya: { lat: -7.2575, lng: 112.7521 },
-  Yogyakarta: { lat: -7.7956, lng: 110.3695 },
-  Semarang: { lat: -6.9667, lng: 110.4167 },
-  Makassar: { lat: -5.1477, lng: 119.4324 },
-};
+export const CITY_COORDS: Record<string, { lat: number; lng: number }> =
+  Object.fromEntries(CITY_INFO.map((c) => [c.city, { lat: c.lat, lng: c.lng }]));
 
 // Koordinat Ka'bah untuk perhitungan arah kiblat
 export const KAABA_COORDS = { lat: 21.4225, lng: 39.8262 };

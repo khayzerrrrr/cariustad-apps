@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, SlidersHorizontal, X, MapPin, Navigation, LocateFixed } from "lucide-react";
 import { ustadzData } from "@/lib/data";
 import { ALL_SPECIALIZATIONS, ALL_CITIES } from "@/lib/types";
+import { ALL_PROVINCES, PROVINCE_CITIES } from "@/lib/regions";
 import { haversine, formatDistance } from "@/lib/geo";
 import UstadzCard from "@/components/UstadzCard";
 
@@ -30,6 +31,7 @@ export default function DirektoriClient({
     initialSpec ? new Set([initialSpec]) : new Set()
   );
   const [city, setCity] = useState<string>("");
+  const [province, setProvince] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("rating");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -105,6 +107,7 @@ export default function DirektoriClient({
     setQ("");
     setSpecs(new Set());
     setCity("");
+    setProvince("");
     setOnlyAvailable(false);
     setRadius(0);
   };
@@ -125,11 +128,12 @@ export default function DirektoriClient({
         u.specializations.some((s) => s.toLowerCase().includes(q.toLowerCase()));
       const matchSpec =
         specs.size === 0 || u.specializations.some((s) => specs.has(s));
+      const matchProvince = !province || u.province === province;
       const matchCity = !city || u.city === city;
       const matchAvail = !onlyAvailable || u.available;
       const matchRadius =
         !userLoc || radius === 0 || (distanceMap[u.id] ?? Infinity) <= radius;
-      return matchQ && matchSpec && matchCity && matchAvail && matchRadius;
+      return matchQ && matchSpec && matchProvince && matchCity && matchAvail && matchRadius;
     });
 
     list = list.sort((a, b) => {
@@ -147,10 +151,14 @@ export default function DirektoriClient({
       }
     });
     return list;
-  }, [q, specs, city, sort, onlyAvailable, userLoc, radius, distanceMap]);
+  }, [q, specs, province, city, sort, onlyAvailable, userLoc, radius, distanceMap]);
 
   const activeFilterCount =
-    specs.size + (city ? 1 : 0) + (onlyAvailable ? 1 : 0) + (radius > 0 ? 1 : 0);
+    specs.size +
+    (city ? 1 : 0) +
+    (province ? 1 : 0) +
+    (onlyAvailable ? 1 : 0) +
+    (radius > 0 ? 1 : 0);
 
   const LocationSection = () => (
     <div className="mt-5">
@@ -308,19 +316,36 @@ export default function DirektoriClient({
             {/* Kota */}
             <div className="mt-5">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Kota
+                Provinsi &amp; Kota
               </h3>
+              <select
+                value={province}
+                onChange={(e) => {
+                  setProvince(e.target.value);
+                  setCity("");
+                }}
+                className="mt-3 w-full rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              >
+                <option value="">Semua provinsi ({ALL_PROVINCES.length})</option>
+                {ALL_PROVINCES.map((pr) => (
+                  <option key={pr} value={pr}>
+                    {pr}
+                  </option>
+                ))}
+              </select>
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="mt-3 w-full rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="mt-2 w-full rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               >
                 <option value="">Semua kota</option>
-                {ALL_CITIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
+                {(province ? PROVINCE_CITIES[province] ?? [] : ALL_CITIES).map(
+                  (c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
@@ -377,19 +402,36 @@ export default function DirektoriClient({
               </div>
               <div className="mt-5">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Kota
+                  Provinsi &amp; Kota
                 </h3>
+                <select
+                  value={province}
+                  onChange={(e) => {
+                    setProvince(e.target.value);
+                    setCity("");
+                  }}
+                  className="mt-3 w-full rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-slate-700"
+                >
+                  <option value="">Semua provinsi ({ALL_PROVINCES.length})</option>
+                  {ALL_PROVINCES.map((pr) => (
+                    <option key={pr} value={pr}>
+                      {pr}
+                    </option>
+                  ))}
+                </select>
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="mt-3 w-full rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-slate-700"
+                  className="mt-2 w-full rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-slate-700"
                 >
                   <option value="">Semua kota</option>
-                  {ALL_CITIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
+                  {(province ? PROVINCE_CITIES[province] ?? [] : ALL_CITIES).map(
+                    (c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
               <div className="mt-5">
