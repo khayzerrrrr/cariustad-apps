@@ -77,3 +77,29 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ===== Avatar 2D — animasi karakter ===== */
+/* Napas halus saat menganggur */
+@keyframes avatar-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.006); }
+}
+
+/* Gerakan sedikit lebih hidup saat berbicara */
+@keyframes avatar-talk {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2px) rotate(-0.35deg); }
+  50% { transform: translateY(0.5px) rotate(0deg); }
+  75% { transform: translateY(-2.5px) rotate(0.35deg); }
+}
+
+/* Cincin denyut saat mendengarkan */
+@keyframes avatar-ring {
+  0% { transform: translate(-50%, -50%) scale(0.82); opacity: 0.55; }
+  70% { transform: translate(-50%, -50%) scale(1.22); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1.22); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-motion-safe { animation: none !important; }
+}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { Send, Shield, ScrollText, AlertTriangle, Sparkles } from "lucide-react";
 import { avatarReducer, AvatarState, AvatarAction } from "@/lib/avatar/stateMachine";
 import { getVoiceEngine } from "@/lib/avatar/voiceEngine";
@@ -12,16 +11,7 @@ import { isLLMConfigured } from "@/lib/ai/llmProvider";
 import { addBooking } from "@/lib/storage";
 import TranscriptPanel, { ChatMessage } from "./TranscriptPanel";
 import VoiceControls from "./VoiceControls";
-
-// Dynamically import AvatarScene (SSR disabled — Three.js needs browser)
-const AvatarScene = dynamic(
-  () => import("@/components/avatar/AvatarScene"),
-  { ssr: false, loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin" />
-    </div>
-  ) }
-);
+import Avatar2D from "@/components/avatar/Avatar2D";
 
 const STATE_LABELS: Record<AvatarState, string> = {
   idle: "Siap membantu",
@@ -52,6 +42,7 @@ export default function AsistenClient() {
   const [partialText, setPartialText] = useState("");
   const [micError, setMicError] = useState<string | null>(null);
   const [speakingText, setSpeakingText] = useState("");
+  const [speakChar, setSpeakChar] = useState(-1);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [injectionCount, setInjectionCount] = useState(0);
@@ -110,9 +101,14 @@ export default function AsistenClient() {
       // Speak greeting if voice supported
       if (!isMuted && ve.isSynthesisSupported) {
         setSpeakingText(greetingMsg.content);
+        setSpeakChar(0);
         ve.speak(greetingMsg.content, {
           onSpeakStart: () => dispatch("START_SPEAKING"),
-          onSpeakEnd: () => dispatch("STOP_SPEAKING"),
+          onSpeakBoundary: (i) => setSpeakChar(i),
+          onSpeakEnd: () => {
+            dispatch("STOP_SPEAKING");
+            setSpeakChar(-1);
+          },
         });
       }
 
@@ -223,11 +219,14 @@ export default function AsistenClient() {
         const ve = voiceEngineRef.current;
         if (!isMuted && ve.isSynthesisSupported) {
           setSpeakingText(result.reply);
+          setSpeakChar(0);
           dispatch("START_SPEAKING");
           ve.speak(result.reply, {
             onSpeakStart: () => dispatch("START_SPEAKING"),
+            onSpeakBoundary: (i) => setSpeakChar(i),
             onSpeakEnd: () => {
               dispatch("STOP_SPEAKING");
+              setSpeakChar(-1);
             },
           });
         } else {
@@ -324,6 +323,8 @@ export default function AsistenClient() {
     setPartialText("");
     setIsThinking(false);
     setIsListening(false);
+    setSpeakingText("");
+    setSpeakChar(-1);
     agentContextRef.current = EMPTY_CONTEXT;
     dispatch("RESET");
     voiceEngineRef.current.stopSpeaking();
@@ -396,7 +397,11 @@ export default function AsistenClient() {
           <div className="flex flex-col rounded-2xl border border-emerald-100 bg-white shadow-sm overflow-hidden">
             {/* Avatar canvas */}
             <div className="relative h-[340px] sm:h-[420px] bg-gradient-to-b from-emerald-50/50 to-transparent">
-              <AvatarScene state={avatarState} speakingText={speakingText} />
+              <Avatar2D
+                state={avatarState}
+                speakingText={speakingText}
+                charIndex={speakChar}
+              />
 
               {/* State indicator */}
               <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 shadow-sm">
