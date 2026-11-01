@@ -18,6 +18,41 @@ export interface VoiceEngineCallbacks {
   onSpeakBoundary?: (charIndex: number) => void;
 }
 
+/* Nama suara bernuansa laki-laki di berbagai platform.
+   Catatan: JANGAN pakai kata "male" saja secara LONGGAR —
+   "female" juga mengandung substring "male". */
+export const MALE_VOICE_HINTS = [
+  "ardi", // Microsoft Ardi (Edge, id-ID male natural)
+  "gadang", // Microsoft Gadang (Windows, id-ID male)
+  "andika", // Microsoft Andika (Windows, id-ID male)
+  "laki-laki",
+  "pria",
+  " male", // spasi depan supaya tidak menangkap "female"
+];
+export const FEMALE_VOICE_HINTS = [
+  "damayanti", // macOS/iOS id-ID
+  "gadis", // Windows id-ID female
+  "female",
+  "wanita",
+  "perempuan",
+];
+
+/**
+ * Bersihkan teks tampilan agar enak dibacakan TTS:
+ * simbol markdown/poin/emoji-era dibuang, pemisah diganti jeda wajar.
+ * Disengaja konservatif supaya indeks karakter TTS tetap dekat dengan
+ * teks tampilan yang dipakai sinkronisasi bibir avatar.
+ */
+export function sanitizeForSpeech(text: string): string {
+  return (text || "")
+    .replace(/[*_#`>]/g, "")
+    .replace(/[•·▪◦←→]+/g, " ")
+    .replace(/\s*—\s*/g, ", ")
+    .replace(/\s*\|\s*/g, ", ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export class VoiceEngine {
   private recognition: any = null;
   private synth: SpeechSynthesis | null = null;
@@ -26,11 +61,67 @@ export class VoiceEngine {
   private listening = false;
   private speaking = false;
   private muted = false;
+  /* Daftar suara sering kosong sampai event voiceschanged ditembakkan */
+  private voicesCache: SpeechSynthesisVoice[] = [];
 
   constructor() {
     if (typeof window !== "undefined") {
       this.synth = window.speechSynthesis;
+      if (this.synth) {
+        this.refreshVoices();
+        this.synth.onvoiceschanged = () => this.refreshVoices();
+      }
     }
+  }
+
+  private refreshVoices() {
+    if (!this.synth) return;
+    const voices = this.synth.getVoices();
+    if (voices.length > 0) this.voicesCache = voices;
+  }
+
+  /**
+   * Pilih suara laki-laki Indonesia yang ramah.
+   *
+   * Browser menyediakan kumpulan suara berbeda-beda:
+   *  - Edge:  "Microsoft Ardi Online (Natural)" — laki-laki id-ID
+   *  - Windows: "Microsoft Gadang" — laki-laki; "Gadis" — perempuan
+   *  - macOS/iOS: "Damayanti" — perempuan (satu-satunya id-ID)
+   *  - Chrome/Android: suara Google id-ID (umumnya perempuan)
+   *
+   * Strategi: beri skor positif pada nama bernuansa laki-laki, penalti
+   * besar pada nama bernuansa perempuan, lalu jika tidak ada suara
+   * laki-laki sama sekali, turunkan pitch agar bernada lebih berat.
+   */
+  private pickVoice(): { voice: SpeechSynthesisVoice | null; isMale: boolean } {
+    this.refreshVoices();
+    const idVoices = this.voicesCache.filter((v) =>
+      v.lang.toLowerCase().startsWith("id")
+    );
+    const pool = idVoices.length > 0 ? idVoices : this.voicesCache;
+
+    let best: SpeechSynthesisVoice | null = null;
+    let bestScore = -Infinity;
+    let bestIsMale = false;
+
+    for (const v of pool) {
+      const n = v.name.toLowerCase();
+      let score = 0;
+      if (v.lang.toLowerCase().startsWith("id")) score += 30;
+      if (MALE_VOICE_HINTS.some((h) => n.includes(h))) score += 50;
+      if (FEMALE_VOICE_HINTS.some((h) => n.includes(h))) score -= 100;
+      if (n.includes("natural") || n.includes("online")) score += 8;
+      if (n.includes("google")) score += 4;
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = v;
+        bestIsMale =
+          MALE_VOICE_HINTS.some((h) => n.includes(h)) &&
+          !FEMALE_VOICE_HINTS.some((h) => n.includes(h));
+      }
+    }
+    return { voice: best, isMale: bestIsMale };
   }
 
   /** Check if Speech Recognition is supported */
@@ -242,7 +333,7 @@ export class VoiceEngine {
     this.listening = false;
   }
 
-  /** Speak text using TTS */
+  /** Speak text using TTS — suara laki-laki Indonesia, ramah dan sopan */
   speak(text: string, callbacks?: VoiceEngineCallbacks) {
     if (this.muted || !this.synth || !this.isSynthesisSupported) {
       callbacks?.onSpeakEnd?.();
@@ -252,21 +343,20 @@ export class VoiceEngine {
     // Cancel any ongoing speech
     this.synth.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const spoken = sanitizeForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(spoken);
     utterance.lang = "id-ID";
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
 
-    // Try to find Indonesian male voice
-    const voices = this.synth.getVoices();
-    const idVoice = voices.find(
-      (v) => v.lang.startsWith("id") && v.name.toLowerCase().includes("male")
-    ) || voices.find((v) => v.lang.startsWith("id"));
-
-    if (idVoice) {
-      utterance.voice = idVoice;
+    const { voice, isMale } = this.pickVoice();
+    if (voice) {
+      utterance.voice = voice;
     }
+    // Suara laki-laki asli: nada sedikit dalam & tempo tenang agar terdengar
+    // bijak. Jika hanya tersedia suara perempuan, turunkan pitch agar
+    // bernada lebih netral/maskulin.
+    utterance.pitch = isMale ? 0.92 : 0.78;
+    utterance.rate = isMale ? 0.98 : 0.96;
+    utterance.volume = 1.0;
 
     if (callbacks) {
       this.callbacks = { ...this.callbacks, ...callbacks };
@@ -307,7 +397,14 @@ export class VoiceEngine {
   /** Get available voices */
   getVoices(): SpeechSynthesisVoice[] {
     if (!this.synth) return [];
-    return this.synth.getVoices();
+    this.refreshVoices();
+    return this.voicesCache;
+  }
+
+  /** Suara yang akan dipilih untuk bicara — berguna untuk uji & diagnostik */
+  getVoiceInfo(): { name: string | null; lang: string | null; isMale: boolean } {
+    const { voice, isMale } = this.pickVoice();
+    return { name: voice?.name ?? null, lang: voice?.lang ?? null, isMale };
   }
 
   /** Cleanup */

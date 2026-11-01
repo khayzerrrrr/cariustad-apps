@@ -12,6 +12,7 @@
     "lint": "next lint",
     "test:lipsync": "node --experimental-strip-types scripts/verify-lipsync.ts",
     "test:avatar": "npx tsx scripts/check-photo-avatar.ts",
+    "test:voice": "npx tsx scripts/check-voice.ts",
     "test:guard": "node --experimental-strip-types scripts/check-prompt-guard.ts",
     "test:http": "node scripts/check-http.mjs",
     "test:agent": "node scripts/check-agent.mjs"
