@@ -29,6 +29,7 @@ export const metadata: Metadata = {
     "ceramah agama",
     "ustadz indonesia",
   ],
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({

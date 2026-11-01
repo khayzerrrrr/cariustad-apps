@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
 
 export default function Logo({ light = false }: { light?: boolean }) {
   return (
     <Link href="/" className="flex items-center gap-2 group">
-      <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-teal-700 text-white shadow-md shadow-primary-500/30 transition-transform group-hover:scale-105">
-        <BookOpen className="h-5 w-5" strokeWidth={2.4} />
-        <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-gold-400 ring-2 ring-white" />
+      <span className="relative inline-flex h-9 w-9 items-center justify-center transition-transform group-hover:scale-105">
+        <Image
+          src="/icons/mark.png"
+          alt="Logo CariUstadz"
+          width={36}
+          height={36}
+          priority
+          className="h-9 w-9 object-contain"
+        />
       </span>
       <span
         className={`font-display text-xl font-bold tracking-tight ${
