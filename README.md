@@ -76,7 +76,8 @@ pilar: **Trust**, **Culture**, dan **Impact**.
 ## Fitur
 
 ### Asisten AI (`/asisten`)
-- **Avatar 3D** — Three.js, lip sync mengikuti teks yang diucapkan, kedip mata
+- **Avatar 2D** — SVG, mulut bergerak mengikuti suara TTS (`onboundary`), kedip mata,
+  arah pandang per state. Tanpa WebGL, tanpa beban three.js.
 - **Input suara** — Web Speech API (gratis, tanpa API key), plus input teks
 - **Cultural Rules Engine** — Salat Jumat, bentrok waktu salat, preferensi gender
 - **Prompt Injection Guard** — 15 pola, input diperlakukan sebagai data
@@ -156,6 +157,7 @@ meningkatkan kualitas bahasa jawaban naratif.
 node scripts/check-agent.mjs        # 9 skenario batas domain + alur booking + Salat Jumat
 node scripts/check-deepseek.mjs     # perutean penyedia LLM
 node scripts/check-avatar-glb.mjs   # validasi struktur model GLB
+npm run test:lipsync                # 8 assert geometri mulut avatar 2D (tanpa browser)
 ```
 
 ---
@@ -165,14 +167,14 @@ node scripts/check-avatar-glb.mjs   # validasi struktur model GLB
 ```
 src/
 ├── app/
-│   ├── asisten/          AI Agent + avatar 3D
+│   ├── asisten/          AI Agent + avatar 2D
 │   ├── api/llm/          gerbang LLM sisi server
 │   ├── ustadz/           direktori + profil
 │   ├── booking/          form + riwayat
 │   ├── kajian/ sholat/ kiblat/ hadith/ tracking/
 │   └── konsultasi/ tentang/
 ├── components/
-│   ├── avatar/           AvatarHead (prosedural), AvatarGLB, AvatarScene
+│   ├── avatar/           Avatar2D (dipakai), AvatarScene/AvatarHead/AvatarGLB (cadangan 3D)
 │   └── asisten/          AsistenClient, TranscriptPanel, VoiceControls
 └── lib/
     ├── ai/
