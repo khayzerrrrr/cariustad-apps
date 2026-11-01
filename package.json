@@ -10,7 +10,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:lipsync": "node --experimental-strip-types scripts/verify-lipsync.ts"
+    "test:lipsync": "node --experimental-strip-types scripts/verify-lipsync.ts",
+    "test:guard": "node --experimental-strip-types scripts/check-prompt-guard.ts",
+    "test:http": "node scripts/check-http.mjs",
+    "test:agent": "node scripts/check-agent.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",
