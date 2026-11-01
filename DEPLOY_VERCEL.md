@@ -12,7 +12,7 @@ Repo sudah siap: https://github.com/khayzerrrrr/cariustad-apps
 | Berkas | Isi |
 |---|---|
 | `vercel.json` | Framework Next.js, region `sin1` (Singapura — terdekat ke Indonesia) |
-| `package.json` | `engines.node = 20.x` supaya Vercel tidak menebak versi |
+| `package.json` | `engines.node = 22.x` supaya Vercel tidak menebak versi (Node 20.x sudah discontinued di Vercel) |
 | `.gitignore` | `.env*.local` dikecualikan — kunci API tidak pernah masuk repo |
 
 Build lokal sudah diverifikasi: **TypeScript 0 error, ESLint 0 warning.**
@@ -133,15 +133,23 @@ penyedia setelah acara selesai.
 
 ---
 
-## Alternatif: deploy lewat CLI
+## Alternatif: deploy lewat CLI (dipakai jika dashboard tidak bisa diakses)
 
-Kalau lebih suka terminal:
+Vercel CLI sudah terpasang dan `vercel` sudah ada di PATH.
 
 ```bash
-npm i -g vercel
-vercel login          # pilih Continue with GitHub
-vercel                # deploy ke preview
-vercel --prod         # deploy ke production
+# sekali saja — membuka browser, pilih Continue with GitHub
+vercel login
+
+# deploy: link project, setel env var dari .env.local, lalu deploy production
+bash scripts/deploy-vercel.sh
 ```
 
-Saat ditanya, terima nilai bawaan. Tambahkan env var lewat `vercel env add` atau dashboard.
+`scripts/deploy-vercel.sh` melakukan tiga hal otomatis:
+
+1. `vercel link --project cariustad-apps`
+2. Menyetel 5 environment variable production dengan membaca `.env.local`
+   (melewati `NEXT_PUBLIC_AVATAR_GLB` secara sengaja)
+3. `vercel deploy --prod`
+
+Tanpa argumen tambahan, tanpa menyalin kunci ke mana pun.
