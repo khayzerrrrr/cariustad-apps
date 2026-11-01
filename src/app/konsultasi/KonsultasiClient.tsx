@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, MessageCircle, Search, ArrowLeft } from "lucide-react";
-import { ustadzData } from "@/lib/data";
-import { getConversation, sendMessage } from "@/lib/storage";
+import { Send, MessageCircle, Search, ArrowLeft, Sparkles } from "lucide-react";
+import { ustadzData, ustadzReplies, salamReply } from "@/lib/data";
+import { getConversation, appendMessage } from "@/lib/storage";
 import { ChatMessage } from "@/lib/types";
 import Avatar from "@/components/Avatar";
 
@@ -21,6 +21,7 @@ export default function KonsultasiClient({
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
   const [mobileChat, setMobileChat] = useState(false);
+  const [typing, setTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   const activeUstadz = ustadzData.find((u) => u.id === activeId)!;
@@ -33,14 +34,52 @@ export default function KonsultasiClient({
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, typing]);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-    const updated = sendMessage(activeId, input.trim());
-    setMessages([...updated]);
+    const text = input.trim();
+    if (!text || typing) return;
+
     setInput("");
+    setMessages([...appendMessage(activeId, "user", text)]);
+    setTyping(true);
+
+    try {
+      // Riwayat untuk persona AI (maks 8 giliran terakhir)
+      const history = messages.slice(-8).map((m) => ({
+        role: m.sender === "user" ? ("user" as const) : ("assistant" as const),
+        content: m.text,
+      }));
+
+      const res = await fetch("/api/konsultasi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ustadzId: activeId, message: text, history }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessages([...appendMessage(activeId, "ustadz", data.reply)]);
+      } else {
+        // Fallback mesin lokal — demo tetap jalan tanpa LLM
+        const isSalam = /assalam|asalam|salamualaikum|alaikum/i.test(text);
+        const fallback = isSalam
+          ? salamReply
+          : ustadzReplies[
+              Math.floor(Math.random() * ustadzReplies.length)
+            ];
+        setMessages([...appendMessage(activeId, "ustadz", fallback)]);
+      }
+    } catch {
+      const isSalam = /assalam|asalam|salamualaikum|alaikum/i.test(text);
+      const fallback = isSalam
+        ? salamReply
+        : ustadzReplies[Math.floor(Math.random() * ustadzReplies.length)];
+      setMessages([...appendMessage(activeId, "ustadz", fallback)]);
+    } finally {
+      setTyping(false);
+    }
   };
 
   const filteredList = ustadzData.filter((u) =>
@@ -56,11 +95,11 @@ export default function KonsultasiClient({
             Konsultasi Online
           </span>
           <h1 className="mt-3 font-display text-2xl font-bold text-slate-800 sm:text-3xl">
-            Chat dengan Ustadz
+            Konsultasi Online dengan Ustadz &amp; Ustadzah
           </h1>
           <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">
-            Sampaikan kebutuhan atau pertanyaan Anda langsung. Ustadz akan
-            membalas untuk membantu.
+            Tanyakan langsung soal keagamaan, keluarga, atau kebutuhan acara —
+            balasan mengikuti keilmuan {`ustadz/ustadzah`} yang Anda pilih.
           </p>
         </div>
 
@@ -177,6 +216,18 @@ export default function KonsultasiClient({
                   </div>
                 </div>
               ))}
+              {/* Indikator mengetik */}
+              {typing && (
+                <div className="flex justify-start">
+                  <div className="rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-sm">
+                    <div className="flex gap-1.5">
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-primary-400" style={{ animationDelay: "0ms" }} />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-primary-400" style={{ animationDelay: "150ms" }} />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-primary-400" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={endRef} />
             </div>
 
@@ -203,7 +254,10 @@ export default function KonsultasiClient({
         </div>
 
         <p className="mt-3 text-center text-xs text-slate-400">
-          * Ini demo konsultasi. Balasan ustadz disimulasikan untuk keperluan hackathon.
+          <Sparkles className="mr-1 inline h-3 w-3 text-primary-400" />
+          Konsultasi online berbantuan AI — balasan mewakili gaya &amp; keilmuan
+          ustadz/ustadzah terpilih untuk demo hackathon. Untuk fatwa resmi,
+          rujuk lembaga yang berwenang.
         </p>
       </div>
     </div>

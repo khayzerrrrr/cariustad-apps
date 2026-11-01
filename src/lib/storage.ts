@@ -132,6 +132,46 @@ export function sendMessage(
   return convo.messages;
 }
 
+/** Tambah satu pesan tanpa auto-reply — dipakai konsultasi online ber-AI. */
+export function appendMessage(
+  ustadzId: string,
+  sender: "user" | "ustadz",
+  text: string
+): ChatMessage[] {
+  const all = getConversations();
+  let convo = all.find((c) => c.ustadzId === ustadzId);
+  if (!convo) {
+    convo = {
+      ustadzId,
+      messages: [
+        {
+          id: "m0",
+          sender: "ustadz",
+          text: "Assalamu'alaikum, saya siap membantu. Ada yang bisa saya bantu?",
+          time: new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        },
+      ],
+    };
+    all.push(convo);
+  }
+
+  convo.messages.push({
+    id: `m${convo.messages.length}_${Date.now()}`,
+    sender,
+    text,
+    time: new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  });
+
+  write(CHAT_KEY, all);
+  return convo.messages;
+}
+
 export function formatRupiah(n: number): string {
   return "Rp " + n.toLocaleString("id-ID");
 }
