@@ -11,6 +11,7 @@ import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 
 const IMG = resolve(__dirname, "../public/avatar/photo-face.png");
+const JAW = resolve(__dirname, "../public/avatar/photo-face-jaw.png");
 const META = resolve(__dirname, "../public/avatar/photo-face-meta.json");
 
 let fails = 0;
@@ -20,21 +21,28 @@ const check = (name: string, ok: boolean, detail = "") => {
 };
 
 check("file PNG wajah ada", existsSync(IMG), IMG);
+check("file PNG rahang ada", existsSync(JAW), JAW);
 check("file metadata ada", existsSync(META), META);
 if (fails > 0) process.exit(1);
 
 /* --- PNG IHDR: lebar & tinggi dari byte 16..24 --- */
 const buf = readFileSync(IMG);
-const isPng =
-  buf.length > 24 &&
-  buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
-check("berkas adalah PNG valid", isPng);
-const w = isPng ? buf.readUInt32BE(16) : 0;
-const h = isPng ? buf.readUInt32BE(20) : 0;
-const bitDepth = isPng ? buf[24] : 0;
-const colorType = isPng ? buf[25] : 0;
-check("ukuran PNG = metadata", w === 640 && h === 853, `${w}x${h}`);
-check("PNG punya kanal alfa (RGBA)", colorType === 6, `colorType=${colorType}, depth=${bitDepth}`);
+const jawBuf = readFileSync(JAW);
+const isPng = (b: Buffer) =>
+  b.length > 24 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+check("berkas wajah adalah PNG valid", isPng(buf));
+check("berkas rahang adalah PNG valid", isPng(jawBuf));
+const w = buf.readUInt32BE(16);
+const h = buf.readUInt32BE(20);
+const jw = jawBuf.readUInt32BE(16);
+const jh = jawBuf.readUInt32BE(20);
+check("ukuran PNG wajah = metadata", w === 640 && h === 853, `${w}x${h}`);
+check("ukuran PNG rahang = metadata", jw === w && jh === h, `${jw}x${jh}`);
+check(
+  "kedua PNG punya kanal alfa (RGBA)",
+  buf[25] === 6 && jawBuf[25] === 6,
+  `colorType wajah=${buf[25]}, rahang=${jawBuf[25]}`
+);
 
 /* --- metadata --- */
 const meta = JSON.parse(readFileSync(META, "utf8"));
@@ -65,6 +73,22 @@ check(
 
 check("warna kulit terdefinisi (hex)", /^#[0-9a-f]{6}$/i.test(meta.skinColor ?? ""), meta.skinColor);
 check("skor deteksi wajah > 0.8", meta.face.score > 0.8, `skor ${meta.face.score}`);
+
+/* --- lapisan rahang (jaw slice) --- */
+const js = meta.jawSlice;
+check("metadata jawSlice ada", !!js && typeof js.topY === "number");
+check(
+  "garis potong rahang antara hidung dan bawah gambar",
+  js.topY > meta.nose.y && js.topY < 0.95,
+  `topY ${js.topY} vs hidung ${meta.nose.y}`
+);
+check(
+  "garis potong dekat pusat mulut (±5%)",
+  Math.abs(js.topY - meta.mouthCenter.y) < 0.05,
+  `topY ${js.topY} vs mulut ${meta.mouthCenter.y}`
+);
+check("turunan rahang wajar (1%..6% tinggi gambar)", js.maxDrop > 0.01 && js.maxDrop < 0.06, `maxDrop ${js.maxDrop}`);
+check("feather rahang ada (>0)", js.feather > 0, `feather ${js.feather}`);
 
 console.log(fails === 0 ? "\nSEMUA LULUS — aset avatar foto siap" : `\n${fails} cek gagal`);
 process.exit(fails === 0 ? 0 : 1);

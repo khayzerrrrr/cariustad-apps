@@ -34,5 +34,11 @@
   "eyeSpreadNorm": 0.2863,
   "eyeSizeNorm": 0.0458,
   "skinColor": "#a6785b",
-  "lipColor": "#b98e71"
+  "lipColor": "#b98e71",
+  "jawSlice": {
+    "topY": 0.6066,
+    "feather": 0.0293,
+    "maxDrop": 0.0269,
+    "file": "/avatar/photo-face-jaw.png"
+  }
 }

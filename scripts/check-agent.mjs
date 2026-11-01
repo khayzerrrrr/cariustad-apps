@@ -67,5 +67,23 @@ const jumat = await ask(
 console.log(`[${jumat.action}]`);
 console.log(`      ${head(jumat.reply, 5).replace(/\n/g, " / ")}`);
 
+console.log("\n— Uji pesan campuran (in-domain + luar domain dalam 1 kalimat) —");
+const mixed = [
+  "saya mau booking ustadz untuk wilayah bandung, tapi laravel projek saya bermasalah dan kena 404, bagaimana cara memperbaikinya?",
+  "cari ustadzah tafsir di Makassar, oh iya sekalian ajarin cara pakai useEffect di react dong",
+  "berapa tarif ustadz nikah di Surabaya? dan tolong buatkan kode python sorting bubble",
+];
+/* Konten solusi di luar domain yang TIDAK BOLEH muncul dalam jawaban */
+const FORBIDDEN = /artisan|composer|web\.php|route::|npm install|useeffect|dependency array|usestate|use\s*state|useRef|sorting bubble|def sort|\.map\(/i;
+for (const m of mixed) {
+  const r = await ask(m);
+  const leaks = FORBIDDEN.test(r.reply);
+  const staysOnDomain = /ustadz|booking|kajian/i.test(r.reply);
+  const ok = !leaks && staysOnDomain;
+  if (!ok) failed++;
+  console.log(`${ok ? "OK  " : "GAGAL"} ${leaks ? "[BOCOR] " : ""}${m.slice(0, 60)}...`);
+  console.log(`      ${head(r.reply, 3).replace(/\n/g, " / ")}`);
+}
+
 console.log(`\nSelesai. ${failed} kegagalan batas domain.`);
 process.exit(failed > 0 ? 1 : 0);

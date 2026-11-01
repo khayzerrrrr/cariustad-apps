@@ -54,6 +54,39 @@ def norm(px, py):
 def fl(v):
     return round(float(v), 4)
 
+# --- potongan rahang (PNG-tuber): lapisan bawah wajah yang turun saat bicara ---
+# garis potong tepat di tengah mulut; tepi atas di-feather agar mulus
+mouth_cx = (rm[0] + lmc[0]) / 2
+mouth_cy = (rm[1] + lmc[1]) / 2
+mouth_w = abs(lmc[0] - rm[0])
+mc_n = norm(mouth_cx, mouth_cy)
+
+cut_y = int(mouth_cy - fh * 0.01)          # posisi absolut garis potong (koordinat sumber)
+rel_cut = int((cut_y - cy0) * sy)          # garis potong dalam gambar final
+feather = max(3, int(fh * 0.05 * sy))      # tebal feather (px final)
+
+ramp = np.zeros((ch, cw), np.float32)
+for row in range(ch):
+    row_f = row * sy
+    if row_f < rel_cut - feather:
+        ramp[row, :] = 0.0
+    elif row_f > rel_cut:
+        ramp[row, :] = 1.0
+    else:
+        ramp[row, :] = (row_f - (rel_cut - feather)) / feather
+
+jaw_rgba = cv2.cvtColor(crop, cv2.COLOR_BGR2BGRA)
+jaw_alpha = (mask.astype(np.float32) * ramp).astype(np.uint8)
+jaw_rgba[:, :, 3] = jaw_alpha
+jaw_final = cv2.resize(jaw_rgba, (640, int(ch * scale)), interpolation=cv2.INTER_LANCZOS4)
+OUT_JAW = os.path.join(os.path.dirname(__file__), "..", "public", "avatar", "photo-face-jaw.png")
+cv2.imwrite(OUT_JAW, jaw_final)
+
+# turunan maksimum rahang: ~4.5% tinggi wajah, ternormalisasi tinggi gambar final
+max_drop_norm = float(fh * 0.045 * sy / fh2)
+top_y_norm = float((cut_y - cy0) * sy / fh2)
+feather_norm = float(feather / fh2)
+
 def sample_bgr(px, py, r=6):
     x0 = int(max(0, (px - cx0) * sx - r)); y0 = int(max(0, (py - cy0) * sy - r))
     x1 = int(min(fw2, (px - cx0) * sx + r)); y1 = int(min(fh2, (py - cy0) * sy + r))
@@ -80,9 +113,16 @@ meta = {
     "eyeSizeNorm": fl(abs(le_ye[0] - re_ye[0]) * 0.16 * sx / fw2),
     "skinColor": sample_bgr((re_ye[0] + le_ye[0]) / 2, min(re_ye[1], le_ye[1]) - fh * 0.22),
     "lipColor": sample_bgr(mouth_cx, mouth_cy - fh * 0.015, 3),
+    "jawSlice": {
+        "topY": round(top_y_norm, 4),
+        "feather": round(feather_norm, 4),
+        "maxDrop": round(max_drop_norm, 4),
+        "file": "/avatar/photo-face-jaw.png",
+    },
 }
 os.makedirs(os.path.dirname(OUT_META), exist_ok=True)
 with open(OUT_META, "w") as fp:
     json.dump(meta, fp, indent=2)
 print(json.dumps(meta, indent=2))
 print("saved:", OUT_IMG, f"{fw2}x{fh2}")
+print("saved:", OUT_JAW, f"{fw2}x{fh2}")
