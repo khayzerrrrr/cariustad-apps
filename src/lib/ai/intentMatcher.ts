@@ -804,6 +804,32 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
     };
   }
 
+  /* 8b. Pertanyaan cakupan jaringan — diletakkan sebelum pencarian agar
+     frasa seperti "jaringan cariustadz menjangkau mana saja" tidak
+     tertangkap kata "cari" dalam nama brand */
+  const COVERAGE_RE =
+    /(menjangkau|jangkauan|cakupan|sebaran|jaringan|mana\s+saja|wilayah\s+mana|daerah\s+mana|area\s+mana)/i;
+  if (COVERAGE_RE.test(message)) {
+    const female = ustadzData.filter((u) => u.gender === "P").length;
+    const groupLines = Object.entries(ISLAND_PROVINCES)
+      .map(
+        ([island, provs]) =>
+          `• ${island}: ${provs.length} provinsi (${provs.slice(0, 4).join(", ")}${
+            provs.length > 4 ? ", dll." : ""
+          })`
+      )
+      .join("\n");
+    return {
+      text:
+        `CariUstadz menjangkau seluruh Indonesia: ${ALL_PROVINCES.length} provinsi, ` +
+        `${ALL_CITIES.length} kota, ${ustadzData.length} ustadz & ustadzah ` +
+        `(di antaranya ${female} ustadzah).\n\nSebaran wilayahnya:\n${groupLines}\n\n` +
+        `Sebutkan kota atau provinsi Anda, saya carikan ustadz yang tepat.`,
+      action: "info",
+      context: { ...ctx, turn: ctx.turn + 1, lastAction: "list_cities" },
+    };
+  }
+
   /* 9. Pencarian berdasarkan kota, bidang, atau nama */
   const cities = findCities(msg);
   const spec = findSpecialization(msg);
