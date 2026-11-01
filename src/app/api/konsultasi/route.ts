@@ -112,8 +112,18 @@ export async function POST(req: NextRequest) {
 
     if (!result.text) throw new Error("jawaban kosong");
 
+    /* Sanitasi salam: persona tidak boleh membalas salam bila penanya
+       tidak mengirim salam — aturan ini kadang dilanggar model kecil. */
+    const userGreeted = /assalam|asalam|salamualaikum|alaikum/i.test(message);
+    const reply = userGreeted
+      ? result.text
+      : result.text
+          .replace(/^\s*wa['’]?alaikum(uss)?alam[a-z ,.'’-]*/i, "")
+          .replace(/^\s*assalamu['’]?alaikum[a-z ,.'’-]*/i, "")
+          .trim();
+
     return NextResponse.json({
-      reply: redactContactBeforeApproval(result.text, false),
+      reply: redactContactBeforeApproval(reply || result.text, false),
       provider: result.provider,
       model: result.model,
       persona: `${ustadz.title} ${ustadz.name}`,
