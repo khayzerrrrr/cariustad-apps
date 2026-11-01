@@ -61,31 +61,38 @@ mouth_cy = (rm[1] + lmc[1]) / 2
 mouth_w = abs(lmc[0] - rm[0])
 mc_n = norm(mouth_cx, mouth_cy)
 
-cut_y = int(mouth_cy - fh * 0.01)          # posisi absolut garis potong (koordinat sumber)
-rel_cut = int((cut_y - cy0) * sy)          # garis potong dalam gambar final
-feather = max(3, int(fh * 0.05 * sy))      # tebal feather (px final)
+cut_src = int(mouth_cy - fh * 0.01) - cy0   # garis potong (baris gambar sumber)
+feather_src = max(2, int(fh * 0.05))        # tebal feather (px sumber)
 
 ramp = np.zeros((ch, cw), np.float32)
 for row in range(ch):
-    row_f = row * sy
-    if row_f < rel_cut - feather:
+    if row < cut_src - feather_src:
         ramp[row, :] = 0.0
-    elif row_f > rel_cut:
+    elif row > cut_src:
         ramp[row, :] = 1.0
     else:
-        ramp[row, :] = (row_f - (rel_cut - feather)) / feather
+        ramp[row, :] = (row - (cut_src - feather_src)) / feather_src
 
 jaw_rgba = cv2.cvtColor(crop, cv2.COLOR_BGR2BGRA)
 jaw_alpha = (mask.astype(np.float32) * ramp).astype(np.uint8)
 jaw_rgba[:, :, 3] = jaw_alpha
-jaw_final = cv2.resize(jaw_rgba, (640, int(ch * scale)), interpolation=cv2.INTER_LANCZOS4)
+# POTONG sungguhan mulai sedikit di atas garis potong (agar tepi feather
+# ikut masuk) sampai bawah gambar. Tanpa ini, file jaw berisi wajah utuh
+# dan komponen menampilkannya sebagai "wajah kedua" di bawah wajah utama.
+jaw_top = max(0, cut_src - feather_src)     # baris sumber
+jaw_slice = jaw_rgba[jaw_top:, :, :]
+jaw_final = cv2.resize(
+    jaw_slice,
+    (640, int(jaw_slice.shape[0] * scale)),
+    interpolation=cv2.INTER_LANCZOS4,
+)
 OUT_JAW = os.path.join(os.path.dirname(__file__), "..", "public", "avatar", "photo-face-jaw.png")
 cv2.imwrite(OUT_JAW, jaw_final)
 
 # turunan maksimum rahang: ~4.5% tinggi wajah, ternormalisasi tinggi gambar final
 max_drop_norm = float(fh * 0.045 * sy / fh2)
-top_y_norm = float((cut_y - cy0) * sy / fh2)
-feather_norm = float(feather / fh2)
+top_y_norm = float(jaw_top * sy / fh2)   # posisi atas potongan (norm tinggi gambar final)
+feather_norm = float(feather_src * sy / fh2)
 
 def sample_bgr(px, py, r=6):
     x0 = int(max(0, (px - cx0) * sx - r)); y0 = int(max(0, (py - cy0) * sy - r))
@@ -125,4 +132,4 @@ with open(OUT_META, "w") as fp:
     json.dump(meta, fp, indent=2)
 print(json.dumps(meta, indent=2))
 print("saved:", OUT_IMG, f"{fw2}x{fh2}")
-print("saved:", OUT_JAW, f"{fw2}x{fh2}")
+print("saved:", OUT_JAW, f"{jaw_final.shape[1]}x{jaw_final.shape[0]}")

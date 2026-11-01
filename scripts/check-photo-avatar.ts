@@ -37,7 +37,6 @@ const h = buf.readUInt32BE(20);
 const jw = jawBuf.readUInt32BE(16);
 const jh = jawBuf.readUInt32BE(20);
 check("ukuran PNG wajah = metadata", w === 640 && h === 853, `${w}x${h}`);
-check("ukuran PNG rahang = metadata", jw === w && jh === h, `${jw}x${jh}`);
 check(
   "kedua PNG punya kanal alfa (RGBA)",
   buf[25] === 6 && jawBuf[25] === 6,
@@ -46,6 +45,14 @@ check(
 
 /* --- metadata --- */
 const meta = JSON.parse(readFileSync(META, "utf8"));
+
+/* Rahang HARUS LEBIH PENDEK dari wajah — ini potongan, bukan wajah kedua.
+   Jika sama tinggi, komponen akan menampilkan wajah ganda (bug double). */
+check(
+  "PNG rahang = potongan (lebar sama, tinggi = (1-topY) × tinggi wajah)",
+  jw === w && Math.abs(jh - h * (1 - meta.jawSlice.topY)) <= 2,
+  `${jw}x${jh} vs ekspektasi ${w}x${Math.round(h * (1 - meta.jawSlice.topY))}`
+);
 const inRange = (v: number) => v >= 0 && v <= 1;
 const allPts = [meta.eyeR, meta.eyeL, meta.nose, meta.mouthCenter, meta.mouthCornerR, meta.mouthCornerL];
 check(

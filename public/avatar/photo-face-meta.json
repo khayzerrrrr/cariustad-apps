@@ -36,8 +36,8 @@
   "skinColor": "#a6785b",
   "lipColor": "#b98e71",
   "jawSlice": {
-    "topY": 0.6066,
-    "feather": 0.0293,
+    "topY": 0.5779,
+    "feather": 0.0287,
     "maxDrop": 0.0269,
     "file": "/avatar/photo-face-jaw.png"
   }
