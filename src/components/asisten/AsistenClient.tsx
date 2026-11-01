@@ -12,6 +12,8 @@ import { addBooking } from "@/lib/storage";
 import TranscriptPanel, { ChatMessage } from "./TranscriptPanel";
 import VoiceControls from "./VoiceControls";
 import Avatar2D from "@/components/avatar/Avatar2D";
+import AvatarPhoto from "@/components/avatar/AvatarPhoto";
+import { Camera, Palette } from "lucide-react";
 
 const STATE_LABELS: Record<AvatarState, string> = {
   idle: "Siap membantu",
@@ -33,6 +35,8 @@ const STATE_COLORS: Record<AvatarState, string> = {
 
 export default function AsistenClient() {
   const [avatarState, dispatchAvatar] = useState<AvatarState>("idle");
+  /** "photo" = wajah asli bergerak, "cartoon" = karakter SVG */
+  const [avatarMode, setAvatarMode] = useState<"photo" | "cartoon">("photo");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isThinking, setIsThinking] = useState(false);
@@ -397,11 +401,40 @@ export default function AsistenClient() {
           <div className="flex flex-col rounded-2xl border border-emerald-100 bg-white shadow-sm overflow-hidden">
             {/* Avatar canvas */}
             <div className="relative h-[340px] sm:h-[420px] bg-gradient-to-b from-emerald-50/50 to-transparent">
-              <Avatar2D
-                state={avatarState}
-                speakingText={speakingText}
-                charIndex={speakChar}
-              />
+              {avatarMode === "photo" ? (
+                <AvatarPhoto
+                  state={avatarState}
+                  speakingText={speakingText}
+                  charIndex={speakChar}
+                />
+              ) : (
+                <Avatar2D
+                  state={avatarState}
+                  speakingText={speakingText}
+                  charIndex={speakChar}
+                />
+              )}
+
+              {/* Toggle mode avatar */}
+              <button
+                onClick={() =>
+                  setAvatarMode((m) => (m === "photo" ? "cartoon" : "photo"))
+                }
+                className="absolute top-4 right-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 shadow-sm text-xs font-medium text-gray-700 hover:bg-white transition-colors"
+                title="Ganti mode avatar"
+              >
+                {avatarMode === "photo" ? (
+                  <>
+                    <Palette className="h-3.5 w-3.5" />
+                    Avatar Kartun
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-3.5 w-3.5" />
+                    Avatar Foto
+                  </>
+                )}
+              </button>
 
               {/* State indicator */}
               <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full bg-white/90 backdrop-blur px-3 py-1.5 shadow-sm">

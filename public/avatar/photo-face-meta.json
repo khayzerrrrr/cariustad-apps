@@ -1,0 +1,38 @@
+{
+  "image": {
+    "w": 640,
+    "h": 853
+  },
+  "face": {
+    "score": 0.944
+  },
+  "eyeR": {
+    "x": 0.3474,
+    "y": 0.3953
+  },
+  "eyeL": {
+    "x": 0.6338,
+    "y": 0.3754
+  },
+  "nose": {
+    "x": 0.507,
+    "y": 0.5088
+  },
+  "mouthCornerR": {
+    "x": 0.407,
+    "y": 0.6228
+  },
+  "mouthCornerL": {
+    "x": 0.6376,
+    "y": 0.6036
+  },
+  "mouthCenter": {
+    "x": 0.5223,
+    "y": 0.6132
+  },
+  "mouthWidthNorm": 0.2307,
+  "eyeSpreadNorm": 0.2863,
+  "eyeSizeNorm": 0.0458,
+  "skinColor": "#a6785b",
+  "lipColor": "#b98e71"
+}
