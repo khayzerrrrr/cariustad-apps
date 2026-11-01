@@ -41,7 +41,7 @@ export default function DirektoriClient({
   const [locStatus, setLocStatus] = useState<"idle" | "loading" | "error">("idle");
   const [locError, setLocError] = useState<string>("");
 
-  const useMyLocation = () => {
+  const applyMyLocation = () => {
     if (!navigator.geolocation) {
       setLocStatus("error");
       setLocError("Browser tidak mendukung geolokasi.");
@@ -67,15 +67,12 @@ export default function DirektoriClient({
   };
 
   // pilih kota manual sebagai "lokasi saya"
-  const useCityLocation = (cityName: string) => {
+  const applyCityLocation = (cityName: string) => {
     if (!cityName) {
       setUserLoc(null);
       setLocLabel("");
       return;
     }
-    const c = ALL_CITIES.includes(cityName)
-      ? ustadzData.find((u) => u.city === cityName)!
-      : null;
     // pakai koordinat kota dari ustadz pertama di kota itu
     const sample = ustadzData.find((u) => u.city === cityName);
     if (sample) {
@@ -161,7 +158,7 @@ export default function DirektoriClient({
         Lokasi & Jarak
       </h3>
       <button
-        onClick={useMyLocation}
+        onClick={applyMyLocation}
         disabled={locStatus === "loading"}
         className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-50 px-3 py-2 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
       >
@@ -177,7 +174,7 @@ export default function DirektoriClient({
       <div className="mt-2">
         <select
           value={userLoc && locLabel.startsWith("Sekitar") ? locLabel.replace("Sekitar ", "") : ""}
-          onChange={(e) => useCityLocation(e.target.value)}
+          onChange={(e) => applyCityLocation(e.target.value)}
           className="w-full rounded-lg border border-sand-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none"
         >
           <option value="">...atau pilih kota</option>
