@@ -39,21 +39,9 @@ export const FEMALE_VOICE_HINTS = [
   "perempuan",
 ];
 
-/**
- * Bersihkan teks tampilan agar enak dibacakan TTS:
- * simbol markdown/poin/emoji-era dibuang, pemisah diganti jeda wajar.
- * Disengaja konservatif supaya indeks karakter TTS tetap dekat dengan
- * teks tampilan yang dipakai sinkronisasi bibir avatar.
- */
-export function sanitizeForSpeech(text: string): string {
-  return (text || "")
-    .replace(/[*_#`>]/g, "")
-    .replace(/[•·▪◦←→]+/g, " ")
-    .replace(/\s*—\s*/g, ", ")
-    .replace(/\s*\|\s*/g, ", ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
+/* Implementasi dipindah ke lib netral agar route server /api/tts bisa memakai. */
+export { sanitizeForSpeech } from "@/lib/textSanitize";
+import { sanitizeForSpeech } from "@/lib/textSanitize";
 
 export class VoiceEngine {
   private recognition: any = null;
@@ -65,6 +53,8 @@ export class VoiceEngine {
   private muted = false;
   /* Daftar suara sering kosong sampai event voiceschanged ditembakkan */
   private voicesCache: SpeechSynthesisVoice[] = [];
+  /** Label suara terakhir yang benar-benar dipakai (server atau browser) */
+  private currentVoiceLabel: string | null = null;
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -335,15 +325,116 @@ export class VoiceEngine {
     this.listening = false;
   }
 
-  /** Speak text using TTS — suara laki-laki Indonesia, ramah dan sopan */
+  /**
+   * Speak text using TTS.
+   * Prioritas: TTS SERVER (/api/tts — suara neural tetap "Ardi", sama di
+   * semua browser). Bila server gagal/belum siap → jatuh ke suara bawaan
+   * browser (kualitas tergantung perangkat).
+   */
   speak(text: string, callbacks?: VoiceEngineCallbacks) {
-    if (this.muted || !this.synth || !this.isSynthesisSupported) {
+    if (this.muted) {
       callbacks?.onSpeakEnd?.();
+      return;
+    }
+    if (callbacks) {
+      this.callbacks = { ...this.callbacks, ...callbacks };
+    }
+
+    this.speakServer(text).catch(() => this.speakBrowser(text));
+  }
+
+  private serverAudio: HTMLAudioElement | null = null;
+  private boundaryRaf: number | null = null;
+  private serverFinished = false;
+
+  private stopServerAudio() {
+    if (this.boundaryRaf !== null) {
+      cancelAnimationFrame(this.boundaryRaf);
+      this.boundaryRaf = null;
+    }
+    if (this.serverAudio) {
+      try {
+        this.serverAudio.pause();
+        this.serverAudio.src = "";
+      } catch {
+        // ignore
+      }
+      this.serverAudio = null;
+    }
+  }
+
+  /** TTS dari server — suara tetap id-ID-ArdiNeural, tak tergantung browser. */
+  private async speakServer(text: string): Promise<void> {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error(`tts api ${res.status}`);
+    const data = (await res.json()) as {
+      audio: string;
+      timings?: Array<{ charIndex: number; atSec: number }>;
+      voice?: string;
+    };
+    if (!data.audio) throw new Error("tts audio kosong");
+
+    // Hentikan sumber suara lain
+    this.synth?.cancel();
+    this.stopServerAudio();
+    this.serverFinished = false;
+
+    const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+    this.serverAudio = audio;
+    this.currentVoiceLabel = data.voice
+      ? `${data.voice} (suara server tetap)`
+      : "Suara server";
+
+    const timings = [...(data.timings ?? [])].sort((a, b) => a.atSec - b.atSec);
+    const loop = () => {
+      if (!this.serverAudio || this.serverAudio.paused) return;
+      let last = -1;
+      for (let i = 0; i < timings.length; i++) {
+        if (timings[i].atSec <= this.serverAudio.currentTime) last = i;
+        else break;
+      }
+      if (last >= 0) this.callbacks.onSpeakBoundary?.(timings[last].charIndex);
+      this.boundaryRaf = requestAnimationFrame(loop);
+    };
+
+    const finish = (err?: string) => {
+      if (this.serverFinished) return;
+      this.serverFinished = true;
+      if (this.boundaryRaf !== null) {
+        cancelAnimationFrame(this.boundaryRaf);
+        this.boundaryRaf = null;
+      }
+      this.speaking = false;
+      if (err) this.callbacks.onSpeakError?.(err);
+      this.callbacks.onSpeakEnd?.();
+    };
+
+    audio.onplay = () => {
+      this.speaking = true;
+      this.callbacks.onSpeakStart?.();
+      this.boundaryRaf = requestAnimationFrame(loop);
+    };
+    audio.onended = () => finish();
+    audio.onerror = () => finish("server_audio_error");
+
+    await audio.play(); // bisa ditolak autoplay — ditangkap pemanggil
+  }
+
+  /** TTS bawaan browser — jalur cadangan bila server tidak tersedia. */
+  private speakBrowser(text: string) {
+    if (!this.synth || !this.isSynthesisSupported) {
+      this.callbacks.onSpeakError?.("no_tts_available");
+      this.callbacks.onSpeakEnd?.();
       return;
     }
 
     // Cancel any ongoing speech
     this.synth.cancel();
+    this.stopServerAudio();
 
     const spoken = sanitizeForSpeech(text);
     const utterance = new SpeechSynthesisUtterance(spoken);
@@ -359,10 +450,7 @@ export class VoiceEngine {
     utterance.pitch = isMale ? 0.92 : 0.78;
     utterance.rate = isMale ? 0.98 : 0.96;
     utterance.volume = 1.0;
-
-    if (callbacks) {
-      this.callbacks = { ...this.callbacks, ...callbacks };
-    }
+    this.currentVoiceLabel = voice ? voice.name : "Suara default browser";
 
     /* Penjaga agar onSpeakEnd/onSpeakError hanya terpanggil sekali per ujaran */
     let finished = false;
@@ -415,6 +503,7 @@ export class VoiceEngine {
     if (this.synth) {
       this.synth.cancel();
     }
+    this.stopServerAudio();
     this.speaking = false;
     this.currentUtterance = null;
   }
@@ -439,12 +528,12 @@ export class VoiceEngine {
     voiceName: string | null;
     isMale: boolean;
   } {
-    const info = this.getVoiceInfo();
+    this.refreshVoices();
     return {
-      supported: this.isSynthesisSupported,
+      supported: true, // jalur server selalu tersedia bila deployment hidup
       voicesCount: this.voicesCache.length,
-      voiceName: info.name,
-      isMale: info.isMale,
+      voiceName: this.currentVoiceLabel ?? this.getVoiceInfo().name,
+      isMale: true, // suara server (Ardi) laki-laki
     };
   }
 
