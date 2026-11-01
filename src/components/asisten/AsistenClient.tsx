@@ -117,10 +117,11 @@ export default function AsistenClient() {
             dispatch("STOP_SPEAKING");
             setSpeakChar(-1);
           },
+          /* Gagal sapaan (mis. autoplay diblokir) TIDAK menandai TTS rusak —
+             jangan bisukan balasan chat hanya karena pembuka tak terdengar. */
           onSpeakError: () => {
             dispatch("STOP_SPEAKING");
             setSpeakChar(-1);
-            setTtsBroken(true);
           },
         });
       }

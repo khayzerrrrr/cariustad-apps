@@ -482,7 +482,24 @@ export class VoiceEngine {
     audio.onended = () => finish();
     audio.onerror = () => finish("server_audio_error");
 
-    await audio.play(); // bisa ditolak autoplay — ditangkap pemanggil
+    try {
+      await audio.play();
+    } catch (err: any) {
+      if (err?.name === "NotAllowedError") {
+        /* Autoplay diblokir browser (sapaan di-load halaman tanpa klik).
+           Ini BUKAN kerusakan TTS — berhenti diam; begitu pengguna
+           berinteraksi (kirim pesan / klik Tes Suara), audio jalan normal. */
+        this.serverFinished = true;
+        if (this.boundaryRaf !== null) {
+          cancelAnimationFrame(this.boundaryRaf);
+          this.boundaryRaf = null;
+        }
+        this.speaking = false;
+        this.stopServerAudio();
+        return;
+      }
+      throw err;
+    }
   }
 
   /** TTS bawaan browser — jalur cadangan bila server tidak tersedia. */
