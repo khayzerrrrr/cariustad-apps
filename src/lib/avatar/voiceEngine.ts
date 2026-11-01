@@ -365,31 +365,94 @@ export class VoiceEngine {
 
   /** TTS dari server — suara tetap id-ID-ArdiNeural, tak tergantung browser. */
   private async speakServer(text: string): Promise<void> {
-    const res = await fetch("/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+    /* msedge-tts tidak bisa dibundel Next (pakai stream/fs Node) dan
+       endpoint Microsoft memblokir IP datacenter Vercel — jadi modul
+       dimuat langsung di BROWSER via CDN ESM; WebSocket dibuka dari
+       perangkat pengguna ke Microsoft, bukan dari server kami. */
+    const mod: any = await (new Function(
+      "u",
+      "return import(u)"
+    ) as (u: string) => Promise<any>)("https://esm.sh/msedge-tts@2.1.1");
+    const { MsEdgeTTS, OUTPUT_FORMAT } = mod;
+    if (!MsEdgeTTS) throw new Error("modul tts gagal dimuat");
+
+    const tts = new MsEdgeTTS();
+    await tts.setMetadata(
+      "id-ID-ArdiNeural",
+      OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3,
+      { wordBoundaryEnabled: true, sentenceBoundaryEnabled: false }
+    );
+
+    const spoken = sanitizeForSpeech(text);
+    const { audioStream, metadataStream } = tts.toStream(spoken);
+
+    // Kumpulkan audio (dibungkus timeout agar tidak menggantung selamanya)
+    const withTimeout = <T>(p: Promise<T>, ms: number, label: string) =>
+      Promise.race([
+        p,
+        new Promise<never>((_, rej) =>
+          setTimeout(() => rej(new Error(label)), ms)
+        ),
+      ]);
+
+    const audioParts: BlobPart[] = [];
+    await withTimeout(
+      new Promise<void>((resolve, reject) => {
+        audioStream.on("data", (c: any) => audioParts.push(c));
+        audioStream.on("end", () => resolve());
+        audioStream.on("error", (e: any) => reject(new Error(String(e))));
+      }),
+      20000,
+      "synthesis timeout"
+    ).catch((e) => {
+      try {
+        audioStream.destroy?.();
+      } catch {
+        /* noop */
+      }
+      throw e;
     });
-    if (!res.ok) throw new Error(`tts api ${res.status}`);
-    const data = (await res.json()) as {
-      audio: string;
-      timings?: Array<{ charIndex: number; atSec: number }>;
-      voice?: string;
-    };
-    if (!data.audio) throw new Error("tts audio kosong");
+
+    // Word boundary → peta {charIndex, atSec} untuk lip-sync
+    const timings: Array<{ charIndex: number; atSec: number }> = [];
+    if (metadataStream) {
+      const metaLines: string[] = [];
+      metadataStream.on("data", (c: any) =>
+        metaLines.push(String(c))
+      );
+      metadataStream.on("end", () => {
+        for (const line of metaLines.join("").split("\n")) {
+          if (!line.trim()) continue;
+          try {
+            const m = JSON.parse(line);
+            if (m?.type !== "WordBoundary") continue;
+            const word = String(m.data?.text?.Text ?? "");
+            if (!word) continue;
+            const idx = spoken.indexOf(word);
+            timings.push({
+              charIndex: idx >= 0 ? idx : 0,
+              atSec: Number(m.data?.offset ?? 0) / 1e7,
+            });
+          } catch {
+            /* baris rusak — lewati */
+          }
+        }
+        timings.sort((a, b) => a.atSec - b.atSec);
+      });
+    }
+
+    if (audioParts.length === 0) throw new Error("audio kosong");
 
     // Hentikan sumber suara lain
     this.synth?.cancel();
     this.stopServerAudio();
     this.serverFinished = false;
 
-    const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+    const blob = new Blob(audioParts, { type: "audio/mpeg" });
+    const audio = new Audio(URL.createObjectURL(blob));
     this.serverAudio = audio;
-    this.currentVoiceLabel = data.voice
-      ? `${data.voice} (suara server tetap)`
-      : "Suara server";
+    this.currentVoiceLabel = "id-ID-ArdiNeural (suara tetap)";
 
-    const timings = [...(data.timings ?? [])].sort((a, b) => a.atSec - b.atSec);
     const loop = () => {
       if (!this.serverAudio || this.serverAudio.paused) return;
       let last = -1;
