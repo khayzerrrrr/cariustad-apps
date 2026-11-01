@@ -2,6 +2,9 @@
 
 > **AI CAN DO IT — Tencent Cloud Hackathon Indonesia 2026** · Challenge B (Agen Kantor)
 
+**Live demo:** https://cariustad-apps.vercel.app
+**Halaman agent:** https://cariustad-apps.vercel.app/asisten
+
 Platform pencarian & booking ustadz terverifikasi, dengan AI Agent yang menerima permintaan
 bahasa natural (teks maupun suara), menyusun rencana booking, dan **tidak pernah mengeksekusi
 apa pun tanpa persetujuan manusia**.

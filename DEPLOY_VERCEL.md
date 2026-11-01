@@ -3,6 +3,10 @@
 Tujuan: mendapatkan **live URL** untuk submission hackathon (poin bonus) sekaligus bukti
 platform benar-benar jalan, bukan hanya screenshot.
 
+> **STATUS: SUDAH LIVE** — https://cariustad-apps.vercel.app
+> Deploy dilakukan lewat Vercel CLI, bukan dashboard. Dokumen ini disimpan sebagai catatan
+> cara mengulanginya (misalnya setelah kunci API dirotasi).
+
 Repo sudah siap: https://github.com/khayzerrrrr/cariustad-apps
 
 ---
