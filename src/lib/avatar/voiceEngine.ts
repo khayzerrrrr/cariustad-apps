@@ -340,7 +340,12 @@ export class VoiceEngine {
       this.callbacks = { ...this.callbacks, ...callbacks };
     }
 
-    this.speakServer(text).catch(() => this.speakBrowser(text));
+    this.speakServer(text).catch((e: unknown) => {
+      /* Laporkan alasan agar Tes Suara tidak gelap — lalu fallback. */
+      const reason = e instanceof Error ? e.message : String(e);
+      this.currentVoiceLabel = `TTS tetap gagal (${reason}) — memakai suara browser`;
+      this.speakBrowser(text);
+    });
   }
 
   private serverAudio: HTMLAudioElement | null = null;
@@ -363,17 +368,10 @@ export class VoiceEngine {
     }
   }
 
-  /** TTS dari server — suara tetap id-ID-ArdiNeural, tak tergantung browser. */
+  /** TTS dari server — suara tetap id-ID-ArdiNeural, tak tergantung browser.
+   *  Modul dibundel ke sisi client (fallback stream/fs di next.config). */
   private async speakServer(text: string): Promise<void> {
-    /* msedge-tts tidak bisa dibundel Next (pakai stream/fs Node) dan
-       endpoint Microsoft memblokir IP datacenter Vercel — jadi modul
-       dimuat langsung di BROWSER via CDN ESM; WebSocket dibuka dari
-       perangkat pengguna ke Microsoft, bukan dari server kami. */
-    const mod: any = await (new Function(
-      "u",
-      "return import(u)"
-    ) as (u: string) => Promise<any>)("https://esm.sh/msedge-tts@2.1.1");
-    const { MsEdgeTTS, OUTPUT_FORMAT } = mod;
+    const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
     if (!MsEdgeTTS) throw new Error("modul tts gagal dimuat");
 
     const tts = new MsEdgeTTS();
