@@ -40,8 +40,16 @@ function ProceduralAvatar({ state, speakingText }: AvatarSceneProps) {
 /**
  * Setelan kamera berbeda antara avatar prosedural (potret kepala, sumbu Y
  * di sekitar 0.28) dan model GLB (setengah badan, berdiri dari y = 0).
+ *
+ * Kepala prosedural tingginya 1,77 unit (HALF_H 0,885) belum termasuk peci.
+ * Pada jarak 3,05 dengan fov 34 tinggi pandang hanya 1,87 unit — kepala
+ * terpotong atas-bawah. Jarak 4,35 memberi tinggi pandang 2,66 unit,
+ * cukup untuk kepala + peci + ruang napas di sisi atas dan bawah.
  */
-const CAMERA_PROCEDURAL = { position: [0, 0.45, 3.05] as [number, number, number], fov: 34 };
+const CAMERA_PROCEDURAL = {
+  position: [0, 0.6, 4.9] as [number, number, number],
+  fov: 34,
+};
 const CAMERA_GLB = { position: [0, 0.46, 1.95] as [number, number, number], fov: 32 };
 
 export default function AvatarScene({ state, speakingText }: AvatarSceneProps) {
@@ -115,7 +123,7 @@ export default function AvatarScene({ state, speakingText }: AvatarSceneProps) {
 
       {/* ===== Kontrol kamera ===== */}
       <OrbitControls
-        target={[0, useGLB ? 0.44 : 0.28, 0]}
+        target={[0, useGLB ? 0.44 : 0.42, 0]}
         enablePan={false}
         enableZoom={false}
         minPolarAngle={Math.PI / 2.75}

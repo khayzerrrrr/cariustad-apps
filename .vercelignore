@@ -1,0 +1,31 @@
+# Berkas yang TIDAK diunggah ke Vercel saat deploy.
+#
+# Penting: .env*.local harus dikecualikan. Kalau ikut terunggah, Next.js
+# membaca berkas itu saat build dan meng-inline semua variabel NEXT_PUBLIC_*
+# ke bundle — ini pernah membuat NEXT_PUBLIC_AVATAR_GLB aktif di production
+# sehingga kamera avatar memakai setelan GLB padahal yang dirender avatar
+# prosedural (kepala jadi ter-zoom dan terpotong).
+
+# kunci rahasia — JANGAN pernah diunggah
+.env
+.env*.local
+.env.local.bak
+
+# sisa kerja lokal
+.next-bak-*
+.cache/
+.Trash-0/
+.workbuddy-ai/
+.wbapp_*.genie
+
+# dokumentasi & artefak yang tidak perlu ikut build
+STRATEGI_JUARA_1.html
+README.md
+AKUNTABILITAS.md
+DEPLOY_VERCEL.md
+
+# standar
+node_modules/
+.git/
+*.tsbuildinfo
+next-env.d.ts

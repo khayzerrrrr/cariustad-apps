@@ -39,3 +39,5 @@ next-env.d.ts
 # metadata workspace & artefak sesi
 .workbuddy-ai/
 .wbapp_*.genie
+.vercel
+.env*
