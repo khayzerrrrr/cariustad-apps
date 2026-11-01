@@ -409,14 +409,14 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
   const picked = searchResult?.list?.[0] ?? searchResult?.ustadz;
   const ustadzName = picked ? `${picked.title} ${picked.name}` : undefined;
 
-  let text = formatBookingPlan(parsed, ustadzName);
-  if (cultural.suggestions.length > 0) {
-    text += `\n\nCatatan: ${cultural.suggestions.join(", ")}`;
-  }
+  /* Jawaban booking kini GENERAL: siapa (ustadz/ustadzah) & di daerah mana,
+     lalu arahkan ke hyperlink halaman booking untuk cek jadwal. */
+  let text: string;
   if (picked) {
-    text +=
-      `\n\nSumber rekomendasi: ${picked.title} ${picked.name} — rating ${picked.rating}/5 ` +
-      `(${picked.reviewCount} ulasan), ${picked.experience} tahun pengalaman, ${picked.city}.`;
+    text =
+      `Untuk ${parsed.city ?? picked.city}, saya rekomendasikan ` +
+      `${picked.title} ${picked.name} — ${picked.specializations[0] ?? "kajian"}, rating ${picked.rating}/5, ` +
+      `${picked.experience} tahun pengalaman, berbasis di ${picked.city}, ${picked.province}.`;
     if (needsUstadzah && !isUstadzah(picked)) {
       text += `\nCatatan: Anda menyebut audience muslimah — saya bisa carikan ustadzah bila lebih sesuai.`;
     }
@@ -427,9 +427,16 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
       text +=
         `\nCatatan jujur: di ${picked.city} belum ada ${
           parsed.genderPreference === "ustadz" ? "ustadz pria" : "ustadzah"
-        } di database kami. ` +
-        `Saya tawarkan yang tersedia; bila preferensi ini penting, saya bisa carikan di kota terdekat.`;
+        } di database kami. Saya tawarkan yang tersedia; bila preferensi ini penting, saya bisa carikan di kota terdekat.`;
     }
+    text +=
+      `\n\nJadwal & ketersediaan bisa dicek langsung di halaman booking:\n` +
+      `[Cek Jadwal & Booking ${picked.title} ${picked.name} →](/booking?ustadz=${picked.id})`;
+  } else {
+    text = formatBookingPlan(parsed, ustadzName);
+  }
+  if (cultural.suggestions.length > 0) {
+    text += `\n\nCatatan: ${cultural.suggestions.join(", ")}`;
   }
 
   return {
@@ -507,7 +514,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
           `Hari: ${booking.day}, ${booking.time}\n` +
           `Lokasi: ${booking.location}\n\n` +
           `Permintaan sudah saya catat dan akan diteruskan ke ustadz. ` +
-          `Anda bisa memantau statusnya di halaman Booking.`,
+          `Pantau statusnya di halaman [Booking](/booking).`,
         action: "booking_confirmed",
         booking,
         auditMeta: { confirmed: true },

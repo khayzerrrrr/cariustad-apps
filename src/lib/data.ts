@@ -1040,12 +1040,15 @@ export const initialReviews: Review[] = [
 ];
 
 export const ustadzReplies: string[] = [
-  "Wa'alaikumussalam warahmatullah. Baik, silakan sampaikan kebutuhan acaranya, insya Allah saya bantu.",
   "Alhamdulillah, terima kasih sudah menghubungi. Boleh diberi tahu tanggal dan lokasi acaranya?",
   "Insya Allah tersedia. Untuk detail jadwal dan tema, bisa langsung diatur melalui halaman booking, ya.",
   "Baik, jazakumullahu khairan. Saya tunggu detail acaranya agar bisa dipersiapkan dengan baik.",
   "Sudah saya cek jadwalnya. Silakan pilih slot yang tersedia di halaman booking untuk konfirmasi.",
 ];
+
+/** Balasan khusus bila pengguna mengirim salam — dipakai sekali, bukan diputar. */
+export const salamReply =
+  "Wa'alaikumussalam warahmatullahi wabarakatuh. Baik, silakan sampaikan kebutuhan acaranya, insya Allah saya bantu.";
 
 // === DATA KAJIAN (info kajian yang akan datang) ===
 export const kajianData: Kajian[] = [

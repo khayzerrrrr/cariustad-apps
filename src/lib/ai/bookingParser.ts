@@ -206,8 +206,13 @@ export function formatBookingPlan(parsed: ParsedBookingRequest, ustadzName?: str
   if (parsed.genderPreference !== "any") lines.push(`Preferensi: ${parsed.genderPreference}`);
   lines.push("━━━━━━━━━━━━━━━━━━━━━");
   lines.push("");
-  lines.push("Apakah Anda menyetujui rencana booking ini?");
-  lines.push("Ketik 'setuju' untuk konfirmasi atau 'batal' untuk membatalkan.");
+  if (ustadzName) {
+    lines.push("Jadwal & ketersediaan dicek langsung di halaman booking:");
+    lines.push(`[Buka Halaman Booking →](/booking)`);
+  } else {
+    lines.push("Apakah Anda menyetujui rencana booking ini?");
+    lines.push("Ketik 'setuju' untuk konfirmasi atau 'batal' untuk membatalkan.");
+  }
 
   return lines.join("\n");
 }

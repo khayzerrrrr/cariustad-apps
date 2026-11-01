@@ -28,7 +28,11 @@ export default function BookingClient({
   initialDay: string;
   initialTime: string;
 }) {
-  const [ustadzId, setUstadzId] = useState(initialUstadz || ustadzData[0].id);
+  const [ustadzId, setUstadzId] = useState(
+    ustadzData.some((u) => u.id === initialUstadz)
+      ? initialUstadz
+      : ustadzData[0].id
+  );
   const [day, setDay] = useState(initialDay || "");
   const [time, setTime] = useState(initialTime || "");
   const [form, setForm] = useState({

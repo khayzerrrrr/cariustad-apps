@@ -13,6 +13,7 @@ import {
   Navigation as NavIcon,
 } from "lucide-react";
 import { EventLocation } from "@/lib/types";
+import { CITY_INFO } from "@/lib/regions";
 
 const LocationPickerMap = dynamic(() => import("./LocationPickerMap"), {
   ssr: false,
@@ -156,16 +157,34 @@ export default function LocationPicker({
     [onChange, reverseGeocode]
   );
 
-  // Autocomplete search via Photon API
-  useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.trim().length < 3) {
-      setResults([]);
-      setShowResults(false);
-      return;
-    }
+  /** Fallback terakhir: pencarian offline dari 54 kota internal.
+   *  Menjamin demo tetap jalan meski API pihak ketiga gagal/dibatasi. */
+  const searchInternalCities = useCallback((q: string): SearchResultItem[] => {
+    const needle = q.trim().toLowerCase();
+    return CITY_INFO.filter(
+      (c) =>
+        c.city.toLowerCase().includes(needle) ||
+        c.province.toLowerCase().includes(needle)
+    )
+      .slice(0, 6)
+      .map((c) => ({
+        lat: c.lat,
+        lng: c.lng,
+        name: c.city,
+        detail: `${c.province} — pilih kota, lalu sesuaikan titik di peta`,
+      }));
+  }, []);
 
-    const search = async () => {
-      // Cancel previous request
+  // Autocomplete search: Photon → Nominatim → kota internal
+  const runSearch = useCallback(
+    async (q: string) => {
+      const term = q.trim();
+      if (term.length < 3) {
+        setResults([]);
+        setShowResults(false);
+        return;
+      }
+
       if (searchAbort.current) {
         searchAbort.current.abort();
       }
@@ -178,84 +197,97 @@ export default function LocationPicker({
         const lat = initialPos?.lat ?? -6.2;
         const lon = initialPos?.lng ?? 106.8;
         const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(
-          debouncedQuery
+          term
         )}&lat=${lat}&lon=${lon}&limit=6`;
 
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok) throw new Error("Search failed");
-        const data = await res.json();
+        let items: SearchResultItem[] = [];
 
-        const items: SearchResultItem[] = (data.features as PhotonFeature[])
-          .filter((f) => {
-            const [, lat] = f.geometry.coordinates;
-            const [lng] = f.geometry.coordinates;
-            return validateIndonesia(lat, lng);
-          })
-          .map((f) => {
-            const [lng, lat] = f.geometry.coordinates;
-            const { name, detail } = formatPhotonResult(f.properties);
-            return { lat, lng, name, detail };
-          });
+        /* 1. Photon — bias lokasi, cocok untuk POI (masjid, gedung) */
+        try {
+          const res = await fetch(url, { signal: controller.signal });
+          if (res.ok) {
+            const data = await res.json();
+            items = ((data.features as PhotonFeature[]) ?? [])
+              .filter((f) => {
+                const [fLng, fLat] = f.geometry.coordinates;
+                return validateIndonesia(fLat, fLng);
+              })
+              .map((f) => {
+                const [fLng, fLat] = f.geometry.coordinates;
+                const { name, detail } = formatPhotonResult(f.properties);
+                return { lat: fLat, lng: fLng, name, detail };
+              });
+          }
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+        }
+
+        /* 2. Nominatim — fallback bila Photon kosong/gagal */
+        if (items.length === 0) {
+          try {
+            const res2 = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&accept-language=id&countrycodes=id&limit=6&q=${encodeURIComponent(
+                term
+              )}`,
+              { signal: controller.signal }
+            );
+            if (res2.ok) {
+              const data2 = await res2.json();
+              items = (data2 as Array<{
+                display_name: string;
+                lat: string;
+                lon: string;
+              }>).map((r) => {
+                const parts = r.display_name.split(",");
+                return {
+                  lat: parseFloat(r.lat),
+                  lng: parseFloat(r.lon),
+                  name: parts[0] || "Lokasi",
+                  detail: parts.slice(1).join(",").trim(),
+                };
+              });
+            }
+          } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") return;
+          }
+        }
+
+        /* 3. Kota internal — selalu ada hasil untuk nama kota/provinsi */
+        if (items.length === 0) {
+          items = searchInternalCities(term);
+        }
 
         if (items.length === 0) {
           setResults([]);
           setShowResults(false);
-          setError(`Tidak ditemukan hasil untuk "${debouncedQuery}".`);
+          setError(
+            `Tidak ditemukan hasil untuk "${term}". Coba nama kota (mis. "Bandung") atau klik langsung di peta.`
+          );
         } else {
           setResults(items);
           setShowResults(true);
           setActiveIndex(-1);
         }
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        // Fallback: try Nominatim
-        try {
-          const res2 = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-              debouncedQuery
-            )}&limit=6&countrycodes=id`,
-            { signal: controller.signal }
-          );
-          if (!res2.ok) throw new Error("fallback failed");
-          const data2 = await res2.json();
-          const items2: SearchResultItem[] = data2.map(
-            (r: { display_name: string; lat: string; lon: string }) => {
-              const parts = r.display_name.split(",");
-              return {
-                lat: parseFloat(r.lat),
-                lng: parseFloat(r.lon),
-                name: parts[0] || "Lokasi",
-                detail: parts.slice(1).join(",").trim(),
-              };
-            }
-          );
-          if (items2.length === 0) {
-            setResults([]);
-            setShowResults(false);
-            setError(`Tidak ditemukan hasil untuk "${debouncedQuery}".`);
-          } else {
-            setResults(items2);
-            setShowResults(true);
-            setActiveIndex(-1);
-          }
-        } catch {
-          setError("Gagal mencari lokasi. Periksa koneksi internet.");
-          setResults([]);
-          setShowResults(false);
-        }
       } finally {
         setSearching(false);
       }
-    };
+    },
+    [initialPos, searchInternalCities]
+  );
 
-    search();
-
+  useEffect(() => {
+    if (!debouncedQuery || debouncedQuery.trim().length < 3) {
+      setResults([]);
+      setShowResults(false);
+      return;
+    }
+    runSearch(debouncedQuery);
     return () => {
       if (searchAbort.current) {
         searchAbort.current.abort();
       }
     };
-  }, [debouncedQuery, initialPos]);
+  }, [debouncedQuery, runSearch]);
 
   const handleSelectResult = (r: SearchResultItem) => {
     setShowResults(false);
@@ -265,8 +297,10 @@ export default function LocationPicker({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showResults || results.length === 0) {
-      if (e.key === "Enter" && results.length === 0 && query.trim().length >= 3) {
-        // Allow Enter to trigger search even if no results shown yet
+      // Enter langsung mencari, tanpa menunggu debounce
+      if (e.key === "Enter" && query.trim().length >= 3) {
+        e.preventDefault();
+        runSearch(query);
       }
       return;
     }

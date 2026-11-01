@@ -1,5 +1,5 @@
 import { Review, Booking, Conversation, ChatMessage } from "./types";
-import { initialReviews, ustadzReplies } from "./data";
+import { initialReviews, ustadzReplies, salamReply } from "./data";
 
 const isClient = typeof window !== "undefined";
 
@@ -112,8 +112,11 @@ export function sendMessage(
     time: now,
   });
 
-  // mock auto-reply
-  const reply = ustadzReplies[convo.messages.length % ustadzReplies.length];
+  // mock auto-reply — salam hanya dibalas salam, tidak pernah diulang sendiri
+  const isSalamGreeting = /assalam|asalam|salamualaikum|alaikum/i.test(text);
+  const reply = isSalamGreeting
+    ? salamReply
+    : ustadzReplies[convo.messages.length % ustadzReplies.length];
   convo.messages.push({
     id: `m${convo.messages.length}_${Date.now() + 1}`,
     sender: "ustadz",

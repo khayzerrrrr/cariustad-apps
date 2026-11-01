@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import Link from "next/link";
 import { Shield, FileText, AlertTriangle } from "lucide-react";
 
 export interface ChatMessage {
@@ -15,6 +16,36 @@ export interface ChatMessage {
 interface TranscriptPanelProps {
   messages: ChatMessage[];
   isThinking: boolean;
+}
+
+/** Render [label](url) sebagai tautan yang bisa diklik (internal = <Link>). */
+function renderWithLinks(text: string): ReactNode[] {
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+  return parts.map((part, i) => {
+    const m = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (!m) return <span key={i}>{part}</span>;
+    const [, label, href] = m;
+    const internal = href.startsWith("/");
+    return internal ? (
+      <Link
+        key={i}
+        href={href}
+        className="font-semibold text-emerald-700 underline decoration-emerald-400 underline-offset-2 hover:text-emerald-800"
+      >
+        {label}
+      </Link>
+    ) : (
+      <a
+        key={i}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-semibold text-emerald-700 underline decoration-emerald-400 underline-offset-2 hover:text-emerald-800"
+      >
+        {label}
+      </a>
+    );
+  });
 }
 
 export default function TranscriptPanel({ messages, isThinking }: TranscriptPanelProps) {
@@ -67,7 +98,7 @@ export default function TranscriptPanel({ messages, isThinking }: TranscriptPane
                 Rencana Booking — Menunggu Persetujuan
               </div>
             )}
-            {msg.content}
+            {renderWithLinks(msg.content)}
           </div>
         </div>
       ))}
