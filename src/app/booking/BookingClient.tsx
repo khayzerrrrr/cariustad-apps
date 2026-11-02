@@ -13,9 +13,7 @@ import {
   ArrowRight,
   Navigation,
   ShieldCheck,
-  Smartphone,
   XCircle,
-  AlertTriangle,
   BadgeCheck,
 } from "lucide-react";
 import { ustadzData } from "@/lib/data";
@@ -25,17 +23,12 @@ import {
   addBooking,
   updateBookingStatus,
   getVerifiedPhone,
-  setVerifiedPhone,
   formatRupiah,
 } from "@/lib/storage";
-import {
-  checkBooking,
-  generateOtp,
-  isValidPhone,
-  normalizePhone,
-} from "@/lib/bookingGuard";
+import { checkBooking } from "@/lib/bookingGuard";
 import Avatar from "@/components/Avatar";
 import LocationPicker from "@/components/LocationPicker";
+import VerificationModal from "@/components/booking/VerificationModal";
 
 export default function BookingClient({
   initialUstadz,
@@ -64,39 +57,14 @@ export default function BookingClient({
   const [success, setSuccess] = useState<Booking | null>(null);
   const [guardError, setGuardError] = useState<string | null>(null);
 
-  // Verifikasi nomor HP (simulasi OTP)
-  const [phone, setPhone] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpDemo, setOtpDemo] = useState<string | null>(null);
-  const [otpInput, setOtpInput] = useState("");
-  const [otpError, setOtpError] = useState<string | null>(null);
+  // Popup verifikasi nomor HP (simulasi OTP) — muncul saat submit
+  const [showVerify, setShowVerify] = useState(false);
   const [verified, setVerified] = useState(false);
 
   useEffect(() => {
     setBookings(getBookings());
     if (getVerifiedPhone()) setVerified(true);
   }, []);
-
-  const handleSendOtp = () => {
-    setOtpError(null);
-    if (!isValidPhone(phone)) {
-      setOtpError("Nomor HP tidak valid. Gunakan format 08xx atau +628xx.");
-      return;
-    }
-    // Demo: kode ditampilkan di layar. Produksi: dikirim via WhatsApp/SMS.
-    setOtpDemo(generateOtp());
-    setOtpSent(true);
-  };
-
-  const handleVerifyOtp = () => {
-    if (otpInput.trim() === otpDemo) {
-      setVerifiedPhone(normalizePhone(phone));
-      setVerified(true);
-      setOtpError(null);
-    } else {
-      setOtpError("Kode verifikasi salah. Periksa kembali.");
-    }
-  };
 
   const selectedUstadz = useMemo(
     () => ustadzData.find((u) => u.id === ustadzId)!,
@@ -114,12 +82,19 @@ export default function BookingClient({
     e.preventDefault();
     if (!day || !time || !form.eventName.trim() || !form.location.trim()) return;
     if (!eventLocation) return;
+
+    // Belum terverifikasi → tampilkan popup verifikasi dulu.
+    // Setelah sukses, booking langsung dilanjutkan otomatis (doSubmit).
     if (!verified) {
-      setGuardError(
-        "Verifikasi nomor WhatsApp Anda terlebih dahulu sebelum booking."
-      );
+      setShowVerify(true);
       return;
     }
+    doSubmit();
+  };
+
+  const doSubmit = () => {
+    if (!day || !time || !form.eventName.trim() || !form.location.trim()) return;
+    if (!eventLocation) return;
 
     const booking: Booking = {
       id: `b_${Date.now()}`,
@@ -133,7 +108,7 @@ export default function BookingClient({
       audience: form.audience.trim() || "-",
       notes: form.notes.trim(),
       status: "pending",
-      contactPhone: normalizePhone(phone),
+      contactPhone: getVerifiedPhone() ?? undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -184,100 +159,19 @@ export default function BookingClient({
             onSubmit={handleSubmit}
             className="space-y-5 rounded-2xl border border-sand-200 bg-white p-6 lg:col-span-2"
           >
-            {/* Verifikasi nomor WhatsApp (anti booking iseng) */}
-            <div className="rounded-xl border border-primary-100 bg-primary-50/50 p-4">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-                  <ShieldCheck className="h-4 w-4 text-primary-500" />
-                  Verifikasi Nomor WhatsApp
-                </label>
-                {verified && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                    <BadgeCheck className="h-3 w-3" />
-                    Terverifikasi
-                  </span>
-                )}
-              </div>
-
-              {!verified ? (
-                <>
-                  <p className="mt-1.5 text-xs text-slate-500">
-                    Nomor terverifikasi dipakai ustadz menghubungi Anda dan
-                    mencegah booking palsu. Satu nomor = satu pemesan.
-                  </p>
-                  <div className="mt-3 flex gap-2">
-                    <div className="relative flex-1">
-                      <Smartphone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="08xxxxxxxxxx"
-                        disabled={otpSent}
-                        inputMode="tel"
-                        className="w-full rounded-lg border border-sand-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:bg-sand-100"
-                      />
-                    </div>
-                    {!otpSent ? (
-                      <button
-                        type="button"
-                        onClick={handleSendOtp}
-                        className="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
-                      >
-                        Kirim Kode
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOtpSent(false);
-                          setOtpDemo(null);
-                          setOtpInput("");
-                        }}
-                        className="shrink-0 rounded-lg border border-sand-200 px-3 py-2 text-xs font-medium text-slate-500 hover:bg-sand-50"
-                      >
-                        Ubah
-                      </button>
-                    )}
-                  </div>
-
-                  {otpError && (
-                    <p className="mt-2 flex items-center gap-1 text-xs text-red-600">
-                      <AlertTriangle className="h-3 w-3" /> {otpError}
-                    </p>
-                  )}
-
-                  {otpSent && otpDemo && (
-                    <div className="mt-3 space-y-2">
-                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                        <strong>Mode demo:</strong> kode verifikasi Anda{" "}
-                        <span className="font-mono font-bold">{otpDemo}</span>
-                        {" "}— di produksi dikirim via WhatsApp.
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          value={otpInput}
-                          onChange={(e) => setOtpInput(e.target.value)}
-                          placeholder="Masukkan 6 digit kode"
-                          inputMode="numeric"
-                          maxLength={6}
-                          className="flex-1 rounded-lg border border-sand-200 bg-white px-3 py-2 font-mono text-sm tracking-widest text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleVerifyOtp}
-                          className="shrink-0 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-                        >
-                          Verifikasi
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-green-700">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {getVerifiedPhone()} siap digunakan untuk booking.
-                </p>
+            {/* Status verifikasi — popup verifikasi muncul saat submit */}
+            <div className="flex items-center justify-between rounded-xl border border-primary-100 bg-primary-50/50 px-4 py-2.5">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary-500" />
+                {verified
+                  ? `Booking terverifikasi atas nama ${getVerifiedPhone()}`
+                  : "Booking wajib diverifikasi via WhatsApp — popup akan muncul saat kirim"}
+              </span>
+              {verified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                  <BadgeCheck className="h-3 w-3" />
+                  Terverifikasi
+                </span>
               )}
             </div>
 
@@ -467,17 +361,12 @@ export default function BookingClient({
 
             <button
               type="submit"
-              disabled={!day || !time || !eventLocation || !verified}
+              disabled={!day || !time || !eventLocation}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-sand-300"
             >
               <ShieldCheck className="h-5 w-5" />
               Kirim Undangan Booking
             </button>
-            {!verified && (
-              <p className="text-center text-xs text-amber-600">
-                Verifikasi nomor WhatsApp di atas untuk mengaktifkan tombol kirim.
-              </p>
-            )}
             {!eventLocation && day && time && (
               <p className="text-center text-xs text-amber-600">
                 Pilih lokasi acara pada peta di atas untuk mengaktifkan tombol kirim.
@@ -578,6 +467,17 @@ export default function BookingClient({
             )}
           </div>
         </div>
+
+        {/* Popup verifikasi WhatsApp sebelum booking dibuat */}
+        <VerificationModal
+          open={showVerify && !verified}
+          onClose={() => setShowVerify(false)}
+          onVerified={() => {
+            setVerified(true);
+            setShowVerify(false);
+            doSubmit();
+          }}
+        />
 
         {/* Success modal */}
         {success && (
