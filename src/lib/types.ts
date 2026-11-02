@@ -102,7 +102,9 @@ export interface Booking {
   eventLocation?: EventLocation;
   audience: string;
   notes: string;
-  status: "pending" | "confirmed" | "completed";
+  status: "pending" | "confirmed" | "completed" | "cancelled";
+  /** Nomor HP pemesan (terverifikasi OTP di demo UI). */
+  contactPhone?: string;
   createdAt: string;
 }
 

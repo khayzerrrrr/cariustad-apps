@@ -52,6 +52,29 @@ export function addBooking(booking: Booking) {
   write(BOOKING_KEY, all);
 }
 
+/** Ubah status booking (konfirmasi, selesai, batal). */
+export function updateBookingStatus(
+  id: string,
+  status: Booking["status"]
+): Booking[] {
+  const all = read<Booking[]>(BOOKING_KEY, []);
+  const updated = all.map((b) => (b.id === id ? { ...b, status } : b));
+  write(BOOKING_KEY, updated);
+  return updated;
+}
+
+// ── Verifikasi nomor HP (simulasi OTP — produksi: WhatsApp/SMS gateway) ──
+
+const PHONE_KEY = "cu_verified_phone";
+
+export function getVerifiedPhone(): string | null {
+  return read<string | null>(PHONE_KEY, null);
+}
+
+export function setVerifiedPhone(phone: string) {
+  write(PHONE_KEY, phone);
+}
+
 export function getConversations(): Conversation[] {
   return read<Conversation[]>(CHAT_KEY, []);
 }

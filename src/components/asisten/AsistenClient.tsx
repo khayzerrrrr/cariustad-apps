@@ -8,7 +8,8 @@ import { logAudit, getAuditLog, AuditEntry } from "@/lib/ai/auditLog";
 import { answer, getServerLLMStatus } from "@/lib/ai/answerEngine";
 import { AgentContext, EMPTY_CONTEXT } from "@/lib/ai/agentContext";
 import { isLLMConfigured } from "@/lib/ai/llmProvider";
-import { addBooking } from "@/lib/storage";
+import { addBooking, getBookings } from "@/lib/storage";
+import { checkBooking } from "@/lib/bookingGuard";
 import TranscriptPanel, { ChatMessage } from "./TranscriptPanel";
 import VoiceControls from "./VoiceControls";
 import Avatar2D from "@/components/avatar/Avatar2D";
@@ -172,21 +173,32 @@ export default function AsistenClient() {
         agentContextRef.current = result.context;
         setProvider(result.provider);
 
-        // Booking yang dikonfirmasi pengguna benar-benar dicatat
+        // Booking yang dikonfirmasi pengguna benar-benar dicatat —
+        // tapi tetap melewati guard anti-abuse (slot ganda, spam, cooldown).
+        let bookingBlocked: string | null = null;
         if (result.booking) {
-          addBooking({
-            id: `bk-${Date.now()}`,
+          const guard = checkBooking(getBookings(), {
             ustadzId: result.booking.ustadzId,
-            ustadzName: result.booking.ustadzName,
             day: result.booking.day,
             time: result.booking.time,
-            eventName: result.booking.eventName,
-            location: result.booking.location,
-            audience: result.booking.audience,
-            notes: result.booking.notes,
-            status: "pending",
-            createdAt: new Date().toISOString(),
           });
+          if (guard.allowed) {
+            addBooking({
+              id: `bk-${Date.now()}`,
+              ustadzId: result.booking.ustadzId,
+              ustadzName: result.booking.ustadzName,
+              day: result.booking.day,
+              time: result.booking.time,
+              eventName: result.booking.eventName,
+              location: result.booking.location,
+              audience: result.booking.audience,
+              notes: result.booking.notes,
+              status: "pending",
+              createdAt: new Date().toISOString(),
+            });
+          } else {
+            bookingBlocked = guard.reason ?? "Booking ditolak sistem.";
+          }
         }
 
         // Audit
@@ -200,9 +212,14 @@ export default function AsistenClient() {
             scope: result.scope,
           });
         } else if (result.booking) {
-          logAudit("execute", "booking_confirmed", text, result.reply, "success", {
-            provider: result.provider,
-          });
+          logAudit(
+            bookingBlocked ? "error" : "execute",
+            bookingBlocked ? "booking_guard_rejected" : "booking_confirmed",
+            text,
+            bookingBlocked ?? result.reply,
+            bookingBlocked ? "blocked" : "success",
+            { provider: result.provider }
+          );
         } else {
           logAudit(
             result.action === "booking_plan" ? "plan" : "search",
@@ -221,7 +238,9 @@ export default function AsistenClient() {
         const aiMsg: ChatMessage = {
           id: `ai-${Date.now()}`,
           role: "assistant",
-          content: result.reply,
+          content: bookingBlocked
+            ? `⚠️ **Booking tidak diproses**\n\n${bookingBlocked}\n\nSilakan sesuaikan permintaan Anda, atau buka halaman [Booking](/booking) untuk mengelola booking yang ada.`
+            : result.reply,
           timestamp: Date.now(),
           action: result.action,
           injectionDetected: result.action === "blocked",
