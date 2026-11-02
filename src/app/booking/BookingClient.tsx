@@ -78,6 +78,13 @@ export default function BookingClient({
   const availableSlots =
     selectedDaySchedule?.slots.filter((s) => !s.booked) ?? [];
 
+  // Memoize agar identitas objek stabil — mencegah LocationPicker
+  // memicu ulang pencarian/popup pada setiap ketikan di form.
+  const ustadzInitialPos = useMemo(
+    () => ({ lat: selectedUstadz.lat, lng: selectedUstadz.lng }),
+    [selectedUstadz.lat, selectedUstadz.lng]
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!day || !time || !form.eventName.trim() || !form.location.trim()) return;
@@ -157,6 +164,7 @@ export default function BookingClient({
           {/* Form */}
           <form
             onSubmit={handleSubmit}
+            autoComplete="off"
             className="space-y-5 rounded-2xl border border-sand-200 bg-white p-6 lg:col-span-2"
           >
             {/* Status verifikasi — popup verifikasi muncul saat submit */}
@@ -289,6 +297,7 @@ export default function BookingClient({
                     setForm({ ...form, eventName: e.target.value })
                   }
                   placeholder="Mis. Kajian Tafsir Pekanan"
+                  autoComplete="off"
                   required
                   className="mt-2 w-full rounded-xl border border-sand-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
@@ -303,6 +312,7 @@ export default function BookingClient({
                     setForm({ ...form, audience: e.target.value })
                   }
                   placeholder="Mis. 50 orang"
+                  autoComplete="off"
                   className="mt-2 w-full rounded-xl border border-sand-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
               </div>
@@ -319,6 +329,7 @@ export default function BookingClient({
                   setForm({ ...form, location: e.target.value })
                 }
                 placeholder="Nama lokasi, mis. Masjid Al-Huda, Jakarta"
+                autoComplete="off"
                 required
                 className="mt-2 w-full rounded-xl border border-sand-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
@@ -326,10 +337,7 @@ export default function BookingClient({
                 <LocationPicker
                   value={eventLocation}
                   onChange={setEventLocation}
-                  initialPos={{
-                    lat: selectedUstadz.lat,
-                    lng: selectedUstadz.lng,
-                  }}
+                  initialPos={ustadzInitialPos}
                 />
               </div>
             </div>
@@ -342,6 +350,7 @@ export default function BookingClient({
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Mis. Tema kajian, dll."
+                autoComplete="off"
                 className="mt-2 w-full rounded-xl border border-sand-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
             </div>

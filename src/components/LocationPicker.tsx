@@ -102,6 +102,13 @@ export default function LocationPicker({
   const debouncedQuery = useDebounce(query, 350);
   const searchAbort = useRef<AbortController | null>(null);
 
+  // Simpan initialPos di ref agar identitas objek baru dari parent
+  // (re-render setiap ketikan) tidak memicu ulang efek pencarian.
+  const initialPosRef = useRef(initialPos);
+  useEffect(() => {
+    initialPosRef.current = initialPos;
+  }, [initialPos]);
+
   // Click outside to close results
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -194,8 +201,8 @@ export default function LocationPicker({
       setSearching(true);
       setError(null);
       try {
-        const lat = initialPos?.lat ?? -6.2;
-        const lon = initialPos?.lng ?? 106.8;
+        const lat = initialPosRef.current?.lat ?? -6.2;
+        const lon = initialPosRef.current?.lng ?? 106.8;
         const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(
           term
         )}&lat=${lat}&lon=${lon}&limit=6`;
@@ -272,26 +279,41 @@ export default function LocationPicker({
         setSearching(false);
       }
     },
-    [initialPos, searchInternalCities]
+    [searchInternalCities]
   );
 
+  // Catat istilah yang sudah dicari: re-render parent TIDAK boleh
+  // membuka ulang dropdown untuk istilah yang sama (bug popup muncul
+  // terus saat mengetik di field lain).
+  const lastSearchedRef = useRef<string>("");
+
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.trim().length < 3) {
+    const q = debouncedQuery?.trim() ?? "";
+    if (q.length < 3) {
+      lastSearchedRef.current = "";
       setResults([]);
       setShowResults(false);
       return;
     }
-    runSearch(debouncedQuery);
+    // Istilah sama + sudah pernah dicari → jangan picu ulang pencarian.
+    if (q === lastSearchedRef.current && results.length > 0) return;
+    lastSearchedRef.current = q;
+    runSearch(q);
     return () => {
       if (searchAbort.current) {
         searchAbort.current.abort();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedQuery, runSearch]);
 
   const handleSelectResult = (r: SearchResultItem) => {
     setShowResults(false);
+    setResults([]);
     setQuery(r.name);
+    // Tandai istilah hasil terpilih agar efek debounce tidak mencari
+    // ulang dan membuka kembali dropdown.
+    lastSearchedRef.current = r.name.trim();
     handlePick(r.lat, r.lng, r.detail || r.name);
   };
 
