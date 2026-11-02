@@ -43,6 +43,47 @@ export const FEMALE_VOICE_HINTS = [
 export { sanitizeForSpeech } from "@/lib/textSanitize";
 import { sanitizeForSpeech } from "@/lib/textSanitize";
 
+/**
+ * Pecah teks jadi potongan per kalimat (≤ ~180 karakter) supaya suara mulai
+ * keluar sejak kalimat pertama selesai disintesis — bukan menunggu seluruh
+ * jawaban (jawaban dalil bisa panjang; tanpa pemecahan, jeda bisa 5-20 detik).
+ * Diekspor untuk pengujian.
+ */
+export function splitForSpeech(text: string): string[] {
+  const sentences = text
+    .split(/(?<=[.!?…])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const chunks: string[] = [];
+  let cur = "";
+  for (const s of sentences) {
+    const merged = cur ? `${cur} ${s}` : s;
+    if (merged.length <= 180) {
+      cur = merged;
+      continue;
+    }
+    if (cur) chunks.push(cur);
+    if (s.length <= 220) {
+      cur = s;
+    } else {
+      // Kalimat sangat panjang — potong per kata
+      cur = "";
+      for (const w of s.split(" ")) {
+        const attempt = cur ? `${cur} ${w}` : w;
+        if (attempt.length > 180 && cur) {
+          chunks.push(cur);
+          cur = w;
+        } else {
+          cur = attempt;
+        }
+      }
+    }
+  }
+  if (cur) chunks.push(cur);
+  return chunks;
+}
+
 export class VoiceEngine {
   private recognition: any = null;
   private synth: SpeechSynthesis | null = null;
@@ -351,8 +392,11 @@ export class VoiceEngine {
   private serverAudio: HTMLAudioElement | null = null;
   private boundaryRaf: number | null = null;
   private serverFinished = false;
+  /** Di-set true oleh stopServerAudio() agar rantai potongan berhenti. */
+  private serverCancelled = false;
 
   private stopServerAudio() {
+    this.serverCancelled = true;
     if (this.boundaryRaf !== null) {
       cancelAnimationFrame(this.boundaryRaf);
       this.boundaryRaf = null;
@@ -368,23 +412,30 @@ export class VoiceEngine {
     }
   }
 
-  /** TTS dari server — suara tetap id-ID-ArdiNeural, tak tergantung browser.
-   *  Modul dibundel ke sisi client (fallback stream/fs di next.config). */
+  /**
+   * TTS dari server — suara tetap id-ID-ArdiNeural, tak tergantung browser.
+   *
+   * ANTI-JEDA: teks dipecah per kalimat. Kalimat pertama diputar segera
+   * setelah audionya siap; kalimat berikutnya disintesis PARALEL selagi
+   * kalimat sebelumnya sedang dibacakan. Sebelumnya seluruh jawaban harus
+   * selesai disintesis dulu — untuk jawaban panjang jeda bisa 5-20 detik.
+   */
   private async speakServer(text: string): Promise<void> {
     const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
     if (!MsEdgeTTS) throw new Error("modul tts gagal dimuat");
 
-    const tts = new MsEdgeTTS();
-    await tts.setMetadata(
-      "id-ID-ArdiNeural",
-      OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3,
-      { wordBoundaryEnabled: true, sentenceBoundaryEnabled: false }
-    );
-
     const spoken = sanitizeForSpeech(text);
-    const { audioStream, metadataStream } = tts.toStream(spoken);
+    const chunks = splitForSpeech(spoken);
+    if (chunks.length === 0) throw new Error("teks kosong");
 
-    // Kumpulkan audio (dibungkus timeout agar tidak menggantung selamanya)
+    // Offset karakter global tiap potongan — untuk lip-sync melintasi potongan
+    const offsets: number[] = [];
+    let acc = 0;
+    for (const c of chunks) {
+      offsets.push(acc);
+      acc += c.length + 1;
+    }
+
     const withTimeout = <T>(p: Promise<T>, ms: number, label: string) =>
       Promise.race([
         p,
@@ -393,74 +444,87 @@ export class VoiceEngine {
         ),
       ]);
 
-    const audioParts: BlobPart[] = [];
-    await withTimeout(
-      new Promise<void>((resolve, reject) => {
-        audioStream.on("data", (c: any) => audioParts.push(c));
-        audioStream.on("end", () => resolve());
-        audioStream.on("error", (e: any) => reject(new Error(String(e))));
-      }),
-      20000,
-      "synthesis timeout"
-    ).catch((e) => {
-      try {
-        audioStream.destroy?.();
-      } catch {
-        /* noop */
-      }
-      throw e;
-    });
-
-    // Word boundary → peta {charIndex, atSec} untuk lip-sync
-    const timings: Array<{ charIndex: number; atSec: number }> = [];
-    if (metadataStream) {
-      const metaLines: string[] = [];
-      metadataStream.on("data", (c: any) =>
-        metaLines.push(String(c))
+    /** Sintesis satu potongan → URL audio + peta timing kata (charIndex global). */
+    const synthChunk = async (
+      chunkText: string,
+      offset: number
+    ): Promise<{ url: string; timings: Array<{ charIndex: number; atSec: number }> }> => {
+      const tts = new MsEdgeTTS();
+      // Handshake dibatasi 6 dtk — kalau layanan lambat, fallback cepat ke
+      // suara browser daripada menggantung (penyebab jeda terlama sebelumnya).
+      await withTimeout(
+        tts.setMetadata(
+          "id-ID-ArdiNeural",
+          OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3,
+          { wordBoundaryEnabled: true, sentenceBoundaryEnabled: false }
+        ),
+        6000,
+        "koneksi layanan suara lambat"
       );
-      metadataStream.on("end", () => {
-        for (const line of metaLines.join("").split("\n")) {
-          if (!line.trim()) continue;
-          try {
-            const m = JSON.parse(line);
-            if (m?.type !== "WordBoundary") continue;
-            const word = String(m.data?.text?.Text ?? "");
-            if (!word) continue;
-            const idx = spoken.indexOf(word);
-            timings.push({
-              charIndex: idx >= 0 ? idx : 0,
-              atSec: Number(m.data?.offset ?? 0) / 1e7,
-            });
-          } catch {
-            /* baris rusak — lewati */
+
+      const { audioStream, metadataStream } = tts.toStream(chunkText);
+
+      const audioParts: BlobPart[] = [];
+      const timings: Array<{ charIndex: number; atSec: number }> = [];
+
+      const metaDone = new Promise<void>((resolve) => {
+        if (!metadataStream) return resolve();
+        const metaLines: string[] = [];
+        metadataStream.on("data", (c: any) => metaLines.push(String(c)));
+        metadataStream.on("end", () => {
+          for (const line of metaLines.join("").split("\n")) {
+            if (!line.trim()) continue;
+            try {
+              const m = JSON.parse(line);
+              if (m?.type !== "WordBoundary") continue;
+              const word = String(m.data?.text?.Text ?? "");
+              if (!word) continue;
+              const idx = chunkText.indexOf(word);
+              timings.push({
+                charIndex: offset + (idx >= 0 ? idx : 0),
+                atSec: Number(m.data?.offset ?? 0) / 1e7,
+              });
+            } catch {
+              /* baris rusak — lewati */
+            }
           }
-        }
-        timings.sort((a, b) => a.atSec - b.atSec);
+          timings.sort((a, b) => a.atSec - b.atSec);
+          resolve();
+        });
+        metadataStream.on("error", () => resolve());
       });
-    }
 
-    if (audioParts.length === 0) throw new Error("audio kosong");
+      await withTimeout(
+        new Promise<void>((resolve, reject) => {
+          audioStream.on("data", (c: any) => audioParts.push(c));
+          audioStream.on("end", () => resolve());
+          audioStream.on("error", (e: any) => reject(new Error(String(e))));
+        }),
+        15000,
+        "sintesis timeout"
+      ).catch((e) => {
+        try {
+          audioStream.destroy?.();
+        } catch {
+          /* noop */
+        }
+        throw e;
+      });
 
-    // Hentikan sumber suara lain
+      await metaDone;
+
+      if (audioParts.length === 0) throw new Error("audio kosong");
+      const blob = new Blob(audioParts, { type: "audio/mpeg" });
+      return { url: URL.createObjectURL(blob), timings };
+    };
+
     this.synth?.cancel();
     this.stopServerAudio();
+    this.serverCancelled = false;
     this.serverFinished = false;
-
-    const blob = new Blob(audioParts, { type: "audio/mpeg" });
-    const audio = new Audio(URL.createObjectURL(blob));
-    this.serverAudio = audio;
     this.currentVoiceLabel = "id-ID-ArdiNeural (suara tetap)";
 
-    const loop = () => {
-      if (!this.serverAudio || this.serverAudio.paused) return;
-      let last = -1;
-      for (let i = 0; i < timings.length; i++) {
-        if (timings[i].atSec <= this.serverAudio.currentTime) last = i;
-        else break;
-      }
-      if (last >= 0) this.callbacks.onSpeakBoundary?.(timings[last].charIndex);
-      this.boundaryRaf = requestAnimationFrame(loop);
-    };
+    let anyPlayed = false;
 
     const finish = (err?: string) => {
       if (this.serverFinished) return;
@@ -470,36 +534,111 @@ export class VoiceEngine {
         this.boundaryRaf = null;
       }
       this.speaking = false;
-      if (err) this.callbacks.onSpeakError?.(err);
+      /* Error hanya dilaporkan bila TIDAK ADA suara yang keluar sama sekali —
+         kegagalan di tengah-tengah (potongan ke-3 misalnya) cukup diakhiri
+         normal, jangan menampilkan banner "rusak" yang menyesatkan. */
+      if (err && !anyPlayed) this.callbacks.onSpeakError?.(err);
       this.callbacks.onSpeakEnd?.();
     };
 
-    audio.onplay = () => {
-      this.speaking = true;
-      this.callbacks.onSpeakStart?.();
-      this.boundaryRaf = requestAnimationFrame(loop);
-    };
-    audio.onended = () => finish();
-    audio.onerror = () => finish("server_audio_error");
-
-    try {
-      await audio.play();
-    } catch (err: any) {
-      if (err?.name === "NotAllowedError") {
-        /* Autoplay diblokir browser (sapaan di-load halaman tanpa klik).
-           Ini BUKAN kerusakan TTS — berhenti diam; begitu pengguna
-           berinteraksi (kirim pesan / klik Tes Suara), audio jalan normal. */
-        this.serverFinished = true;
+    /** Putar satu potongan; resolve dengan statusnya. */
+    const playChunk = (
+      url: string,
+      timings: Array<{ charIndex: number; atSec: number }>
+    ): Promise<"played" | "blocked" | "error"> =>
+      new Promise((resolve) => {
         if (this.boundaryRaf !== null) {
           cancelAnimationFrame(this.boundaryRaf);
           this.boundaryRaf = null;
         }
-        this.speaking = false;
-        this.stopServerAudio();
-        return;
+        const audio = new Audio(url);
+        this.serverAudio = audio;
+
+        const loop = () => {
+          if (!this.serverAudio || this.serverAudio.paused) return;
+          let last = -1;
+          for (let i = 0; i < timings.length; i++) {
+            if (timings[i].atSec <= this.serverAudio.currentTime) last = i;
+            else break;
+          }
+          if (last >= 0) this.callbacks.onSpeakBoundary?.(timings[last].charIndex);
+          this.boundaryRaf = requestAnimationFrame(loop);
+        };
+
+        audio.onplay = () => {
+          this.speaking = true;
+          this.callbacks.onSpeakStart?.();
+          this.boundaryRaf = requestAnimationFrame(loop);
+        };
+        audio.onended = () => resolve("played");
+        audio.onerror = () => resolve("error");
+        audio.play().catch((err: any) => {
+          if (err?.name === "NotAllowedError") {
+            /* Autoplay diblokir (biasanya sapaan saat load halaman tanpa klik).
+               BUKAN kerusakan TTS — berhenti diam; begitu pengguna berinteraksi,
+               audio jalan normal. */
+            resolve("blocked");
+            return;
+          }
+          resolve("error");
+        });
+      });
+
+    try {
+      type ChunkResult = {
+        url: string;
+        timings: Array<{ charIndex: number; atSec: number }>;
+      } | null;
+      let next: Promise<ChunkResult> | null = null;
+      let nextErr: unknown = null;
+
+      for (let i = 0; i < chunks.length; i++) {
+        if (this.serverCancelled || this.serverFinished) break;
+
+        let res: ChunkResult;
+        if (i === 0) {
+          res = await synthChunk(chunks[0], offsets[0]);
+        } else {
+          res = next ? await next : await synthChunk(chunks[i], offsets[i]);
+          if (!res) {
+            /* Potongan hasil pra-sintesis gagal. Bila sudah ada suara yang
+               keluar → akhiri anggun (JANGAN fallback ke suara browser,
+               itu akan mengulang seluruh teks dari awal). */
+            if (anyPlayed) break;
+            throw nextErr ?? new Error("pra-sintesis gagal");
+          }
+        }
+
+        // Pra-sintesis potongan berikutnya SELAGI potongan ini diputar
+        if (i + 1 < chunks.length) {
+          nextErr = null;
+          const idx = i + 1;
+          next = synthChunk(chunks[idx], offsets[idx]).catch((e) => {
+            nextErr = e;
+            return null;
+          });
+        }
+
+        const status = await playChunk(res.url, res.timings);
+        if (status === "blocked") {
+          this.stopServerAudio();
+          this.serverFinished = true;
+          this.speaking = false;
+          return;
+        }
+        if (status === "played") {
+          anyPlayed = true;
+          this.speaking = false;
+        } else {
+          if (!anyPlayed) throw new Error("server_audio_error");
+          break; // sudah ada suara yang keluar — akhiri dengan anggun
+        }
       }
-      throw err;
+    } finally {
+      // Rantai selesai; finish() dipanggil di bawah untuk membereskan state
     }
+
+    finish();
   }
 
   /** TTS bawaan browser — jalur cadangan bila server tidak tersedia. */
@@ -565,6 +704,14 @@ export class VoiceEngine {
 
     utterance.onerror = (event) => {
       const err = (event as SpeechSynthesisErrorEvent)?.error || "error";
+      /* 'interrupted' & 'canceled' biasanya terjadi karena KITA sendiri
+         memanggil cancel() (ganti bicara / mute) — bukan kerusakan TTS.
+         Melaporkannya sebagai error membuat banner "pakai Edge" muncul
+         padahal browser sehat. */
+      if (err === "interrupted" || err === "canceled") {
+        finish();
+        return;
+      }
       finish(`tts:${err}`);
     };
 

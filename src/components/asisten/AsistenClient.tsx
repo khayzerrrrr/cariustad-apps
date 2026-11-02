@@ -34,6 +34,10 @@ const STATE_COLORS: Record<AvatarState, string> = {
   error: "bg-red-600",
 };
 
+/** Deteksi Microsoft Edge — UA Edge memuat "Edg/", Chrome tidak. */
+const isEdgeBrowser = () =>
+  typeof navigator !== "undefined" && /Edg\//.test(navigator.userAgent);
+
 export default function AsistenClient() {
   const [avatarState, dispatchAvatar] = useState<AvatarState>("idle");
   /** "photo" = wajah asli bergerak, "cartoon" = karakter SVG */
@@ -374,9 +378,11 @@ export default function AsistenClient() {
         setTtsTest("fail");
         setTtsDetail(
           status.voicesCount === 0
-            ? "Browser ini tidak punya SATU PUN suara TTS terpasang. Di Chrome Linux hal ini umum (butuh Speech Dispatcher). Solusi paling mudah: buka situs ini di Microsoft Edge — suara laki-laki Indonesia langsung tersedia."
+            ? isEdgeBrowser()
+              ? "Edge kamu belum memuat daftar suara TTS lokal — muat ulang halaman biasanya cukup. Layanan suara server (Ardi) tetap dicoba otomatis dan tidak butuh suara lokal."
+              : "Browser ini tidak punya SATU PUN suara TTS terpasang. Di Chrome Linux hal ini umum (butuh Speech Dispatcher). Solusi paling mudah: buka situs ini di Microsoft Edge — suara laki-laki Indonesia langsung tersedia."
             : reason === "silent"
-              ? `Suara tidak diputar meski ${status.voicesCount} voice terdaftar (${status.voiceName ?? "?"}). Coba: (1) pastikan volume tidak bisu, (2) buka tab lain lalu kembali, (3) gunakan Microsoft Edge.`
+              ? `Suara tidak diputar meski ${status.voicesCount} voice terdaftar (${status.voiceName ?? "?"}). Coba: (1) pastikan volume tidak bisu, (2) buka tab lain lalu kembali, (3) muat ulang halaman${isEdgeBrowser() ? " — kamu sudah di Edge, jadi tidak perlu ganti browser" : ", atau gunakan Microsoft Edge"}.`
               : `TTS error: ${reason}`
         );
       },
@@ -503,12 +509,25 @@ export default function AsistenClient() {
                 <div className="absolute bottom-16 left-4 right-4 z-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/95 backdrop-blur px-3 py-2 shadow-md">
                   <VolumeX className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                   <p className="text-xs leading-relaxed text-amber-800">
-                    Suara tidak dapat diputar di browser ini (teks tetap tampil di
-                    chat). Paling sering: Chrome/Brave di Linux tanpa Speech
-                    Dispatcher. Solusi: buka di <strong>Microsoft Edge</strong>{" "}
-                    (suara laki-laki Indonesia &quot;Ardi&quot; langsung tersedia) atau
-                    Chrome di Windows/Mac. Klik <strong>Tes Suara</strong> di bawah
-                    avatar untuk diagnosis.
+                    {isEdgeBrowser() ? (
+                      <>
+                        Suara tidak dapat diputar pada percakapan ini (teks tetap
+                        tampil di chat). Kamu <strong>sudah memakai Edge</strong> —
+                        penyebab paling umum: koneksi ke layanan suara sempat
+                        terputus, atau audio diblokir untuk sesi ini. Klik{" "}
+                        <strong>Tes Suara</strong> di bawah avatar untuk diagnosis,
+                        atau muat ulang halaman.
+                      </>
+                    ) : (
+                      <>
+                        Suara tidak dapat diputar di browser ini (teks tetap tampil di
+                        chat). Paling sering: Chrome/Brave di Linux tanpa Speech
+                        Dispatcher. Solusi: buka di <strong>Microsoft Edge</strong>{" "}
+                        (suara laki-laki Indonesia &quot;Ardi&quot; langsung tersedia) atau
+                        Chrome di Windows/Mac. Klik <strong>Tes Suara</strong> di bawah
+                        avatar untuk diagnosis.
+                      </>
+                    )}
                   </p>
                   <button
                     onClick={() => setTtsBroken(false)}
