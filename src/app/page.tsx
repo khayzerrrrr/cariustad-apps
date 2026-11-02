@@ -33,7 +33,7 @@ const steps = [
   },
   {
     icon: CalendarCheck,
-    title: "Booking Jadwal",
+    title: "Undang Ustadz",
     desc: "Pilih slot waktu yang tersedia dan kirim undangan untuk kajian, ceramah, atau konsultasi.",
     color: "bg-teal-600",
   },
@@ -101,7 +101,7 @@ export default function HomePage() {
             </h1>
             <p className="hero-text-shadow mx-auto mt-5 max-w-xl text-base text-primary-50/95 sm:text-lg">
               Kajian rutin, ceramah, nikah, hingga konsultasi keluarga —
-              semua dalam satu platform. Cari, booking, dan konsultasi dengan
+              semua dalam satu platform. Cari, undang, dan konsultasi dengan
               ustadz terverifikasi di seluruh Indonesia.
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function HomePage() {
               <p className="mt-2 max-w-xl text-sm text-gray-600 sm:text-base">
                 AI Agent dengan avatar 3D, voice interaksi, kesadaran budaya Islam
                 (salat Jumat, preferensi gender), dan akuntabilitas penuh.
-                Cari ustadz cukup dengan chat atau suara — booking dengan persetujuan Anda.
+                Cari ustadz cukup dengan chat atau suara — undangan dengan persetujuan Anda.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {["Voice & Text", "Cultural Rules", "Human-in-the-Loop", "Audit Log"].map((f) => (

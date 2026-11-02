@@ -216,10 +216,10 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <Navigation className="mx-auto h-12 w-12 text-sand-300" />
         <h1 className="mt-4 font-display text-xl font-bold text-slate-800">
-          Booking tidak ditemukan
+          Undangan tidak ditemukan
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Lakukan booking terlebih dahulu untuk melihat perjalanan ustadz/ustadzah
+          Lakukan undangan terlebih dahulu untuk melihat perjalanan ustadz/ustadzah
           menuju lokasi acara Anda.
         </p>
         <Link
@@ -227,7 +227,7 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
           className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
         >
           <CalendarDays className="h-4 w-4" />
-          Buat Booking
+          Buat Undangan
         </Link>
       </div>
     );
@@ -392,7 +392,7 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
             <div className="rounded-2xl border border-sand-200 bg-white p-5">
               <h3 className="flex items-center gap-1.5 font-semibold text-slate-800">
                 <CalendarDays className="h-4 w-4 text-primary-500" />
-                Detail Booking
+                Detail Undangan
               </h3>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between">

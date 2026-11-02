@@ -200,7 +200,7 @@ export default function KajianPage() {
                           href={`/booking?ustadz=${ustadz.id}`}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-primary-600"
                         >
-                          <Tag className="h-3 w-3" /> Booking serupa
+                          <Tag className="h-3 w-3" /> Undang Ustadz Ini
                         </Link>
                       )}
                     </div>

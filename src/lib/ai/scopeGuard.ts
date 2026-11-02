@@ -354,7 +354,7 @@ export function checkScope(message: string): ScopeResult {
         "Yang bisa saya bantu:\n" +
         "• Cari ustadz berdasarkan bidang, kota, atau nama\n" +
         "• Tampilkan profil, rating, biaya, dan jadwal\n" +
-        "• Proses booking kajian dengan persetujuan Anda\n" +
+        "• Proses undangan kajian dengan persetujuan Anda\n" +
         "• Info kajian mendatang\n\n" +
         "Silakan tanyakan salah satu di atas.",
     };
@@ -375,7 +375,7 @@ export function redactContactBeforeApproval(text: string, bookingConfirmed: bool
   // 08xx-xxxx-xxxx / +62 8xx / 62 8xx
   return text.replace(
     /(\+?62|0)\s?8[\d\s\-().]{7,14}\d/g,
-    "[nomor disembunyikan sampai booking dikonfirmasi]"
+    "[nomor disembunyikan sampai undangan dikonfirmasi]"
   );
 }
 

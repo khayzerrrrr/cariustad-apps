@@ -96,7 +96,7 @@ Jadwal:\n${schedule}
 
 ${u.bio}
 
-Anda dapat booking ${u.title} ${u.name} melalui halaman Booking atau menghubungi via WhatsApp di halaman Konsultasi.`;
+Anda dapat mengundang ${u.title} ${u.name} melalui halaman Undang Ustadz atau menghubungi via WhatsApp di halaman Konsultasi.`;
 }
 
 /** Rekomendasi ustadz berdasarkan kebutuhan */

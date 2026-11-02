@@ -10,7 +10,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <Logo />
             <p className="mt-4 max-w-xs text-sm text-slate-500">
-              Platform pencarian dan booking ustadz terpercaya untuk
+              Platform pencarian dan undangan ustadz terpercaya untuk
               memudahkan umat mengakses ilmu dan bimbingan agama.
             </p>
           </div>
@@ -30,7 +30,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/booking" className="text-slate-500 hover:text-primary-600">
-                  Booking Jadwal
+                  Undang Ustadz ke Acara Anda
                 </Link>
               </li>
               <li>

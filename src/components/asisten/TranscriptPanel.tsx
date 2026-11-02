@@ -101,7 +101,7 @@ export default function TranscriptPanel({ messages, isThinking }: TranscriptPane
             {msg.role === "assistant" && msg.action === "booking_plan" && (
               <div className="flex items-center gap-1.5 text-xs text-amber-600 mb-1 font-medium">
                 <FileText className="w-3.5 h-3.5" />
-                Rencana Booking — Menunggu Persetujuan
+                Rencana Undangan — Menunggu Persetujuan
               </div>
             )}
             {renderWithLinks(msg.content)}

@@ -10,7 +10,7 @@ const primaryLinks = [
   { href: "/", label: "Beranda" },
   { href: "/ustadz", label: "Cari Ustadz" },
   { href: "/kajian", label: "Kajian" },
-  { href: "/booking", label: "Booking" },
+  { href: "/booking", label: "Undang Ustadz" },
   { href: "/konsultasi", label: "Konsultasi" },
   { href: "/asisten", label: "Asisten AI" },
 ];

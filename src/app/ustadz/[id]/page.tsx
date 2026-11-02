@@ -84,7 +84,7 @@ export default function UstadzDetailPage({
                   className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 sm:px-4 sm:py-2.5 sm:text-sm"
                 >
                   <CalendarCheck className="h-4 w-4" />
-                  Booking
+                  Undang Ustadz
                 </Link>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function UstadzDetailPage({
                 className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700"
               >
                 <CalendarCheck className="h-4 w-4" />
-                Booking untuk Kegiatan Ini
+                Undang Ustadz untuk Kegiatan Ini
               </Link>
             </section>
 
@@ -311,7 +311,7 @@ export default function UstadzDetailPage({
                 className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
               >
                 <CalendarCheck className="h-4 w-4" />
-                Booking Sekarang
+                Undang Sekarang
               </Link>
             </div>
           </div>

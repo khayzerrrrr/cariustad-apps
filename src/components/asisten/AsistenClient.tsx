@@ -102,7 +102,7 @@ export default function AsistenClient() {
         id: `greeting-${Date.now()}`,
         role: "assistant",
         content:
-          "Assalamu'alaikum warahmatullah. Saya Asisten AI CariUstadz, siap membantu Anda menemukan dan booking ustadz terverifikasi. Saya juga punya Mode Ustadz Hafizh — silakan tanya dalil Al-Quran atau hadis. Ceritakan kebutuhan Anda dengan mengetik atau berbicara.",
+          "Assalamu'alaikum warahmatullah. Saya Asisten AI CariUstadz, siap membantu Anda menemukan dan mengundang ustadz terverifikasi. Saya juga punya Mode Ustadz Hafizh — silakan tanya dalil Al-Quran atau hadis. Ceritakan kebutuhan Anda dengan mengetik atau berbicara.",
         timestamp: Date.now(),
       };
       setMessages([greetingMsg]);
@@ -197,7 +197,7 @@ export default function AsistenClient() {
               createdAt: new Date().toISOString(),
             });
           } else {
-            bookingBlocked = guard.reason ?? "Booking ditolak sistem.";
+            bookingBlocked = guard.reason ?? "Undangan ditolak sistem.";
           }
         }
 
@@ -239,7 +239,7 @@ export default function AsistenClient() {
           id: `ai-${Date.now()}`,
           role: "assistant",
           content: bookingBlocked
-            ? `⚠️ **Booking tidak diproses**\n\n${bookingBlocked}\n\nSilakan sesuaikan permintaan Anda, atau buka halaman [Booking](/booking) untuk mengelola booking yang ada.`
+            ? `⚠️ **Undangan tidak diproses**\n\n${bookingBlocked}\n\nSilakan sesuaikan permintaan Anda, atau buka halaman [Undang Ustadz](/booking) untuk mengelola undangan yang ada.`
             : result.reply,
           timestamp: Date.now(),
           action: result.action,
@@ -762,7 +762,7 @@ export default function AsistenClient() {
             <div className="flex flex-wrap gap-2">
               {[
                 "Cari ustadz fiqih di Jakarta",
-                "Booking ustadz untuk kajian di Bandung, Senin jam 19:00",
+                "Undang ustadz untuk kajian di Bandung, Senin jam 19:00",
                 "Apa dalil tentang sabar?",
                 "Keutamaan sedekah",
                 "Rekomendasi ustadz terbaik",

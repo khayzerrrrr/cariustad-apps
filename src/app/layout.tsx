@@ -20,10 +20,10 @@ const reemKufi = Reem_Kufi({
 export const metadata: Metadata = {
   title: "CariUstadz — Temukan Ustadz untuk Kebutuhan Dakwah Anda",
   description:
-    "Platform pencarian dan booking ustadz terpercaya di Indonesia. Cari ustadz sesuai spesialisasi, lokasi, dan jadwal. Untuk kajian, ceramah, nikah, dan konsultasi.",
+    "Platform pencarian dan undangan ustadz terpercaya di Indonesia. Cari ustadz sesuai spesialisasi, lokasi, dan jadwal. Untuk kajian, ceramah, nikah, dan konsultasi.",
   keywords: [
     "cari ustadz",
-    "booking ustadz",
+    "undang ustadz",
     "pendakwah",
     "kajian islam",
     "ceramah agama",

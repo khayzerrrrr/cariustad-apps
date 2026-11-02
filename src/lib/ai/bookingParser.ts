@@ -193,7 +193,7 @@ export function parseBookingRequest(message: string): ParsedBookingRequest {
 export function formatBookingPlan(parsed: ParsedBookingRequest, ustadzName?: string): string {
   const lines: string[] = [];
 
-  lines.push("📋 RENCANA BOOKING");
+  lines.push("📋 RENCANA UNDANGAN USTADZ");
   lines.push("━━━━━━━━━━━━━━━━━━━━━");
   if (ustadzName) lines.push(`Ustadz: ${ustadzName}`);
   if (parsed.eventType) lines.push(`Jenis Acara: ${parsed.eventType}`);
@@ -207,10 +207,10 @@ export function formatBookingPlan(parsed: ParsedBookingRequest, ustadzName?: str
   lines.push("━━━━━━━━━━━━━━━━━━━━━");
   lines.push("");
   if (ustadzName) {
-    lines.push("Jadwal & ketersediaan dicek langsung di halaman booking:");
-    lines.push(`[Buka Halaman Booking →](/booking)`);
+    lines.push("Jadwal & ketersediaan dicek langsung di halaman Undang Ustadz:");
+    lines.push(`[Buka Halaman Undangan →](/booking)`);
   } else {
-    lines.push("Apakah Anda menyetujui rencana booking ini?");
+    lines.push("Apakah Anda menyetujui rencana undangan ini?");
     lines.push("Ketik 'setuju' untuk konfirmasi atau 'batal' untuk membatalkan.");
   }
 

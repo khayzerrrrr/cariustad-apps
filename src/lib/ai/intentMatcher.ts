@@ -329,7 +329,7 @@ function refinePrevious(message: string, ctx: AgentContext): IntentResult | null
   return {
     text:
       formatList(top, `Baik, hasil sebelumnya saya ${label}:`) +
-      `\n\nMau saya lanjutkan ke booking salah satu dari mereka?`,
+      `\n\nMau saya lanjutkan ke undangan untuk salah satu dari mereka?`,
     action: "search",
     data: { list: top, text: "" },
     context: {
@@ -352,10 +352,10 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
   if (parsed.completeness === "minimal" || missingCritical.length > 0) {
     return {
       text:
-        `Saya butuh beberapa informasi tambahan sebelum bisa menyusun rencana booking.\n\n` +
+        `Saya butuh beberapa informasi tambahan sebelum bisa menyusun rencana undangan.\n\n` +
         `Yang belum jelas: ${parsed.missingFields.join(", ")}\n\n` +
         `Mohon lengkapi:\n• Jenis acara (kajian, ceramah, pengajian, dll.)\n• Hari/tanggal\n• Waktu\n• Lokasi (kota atau nama masjid)\n\n` +
-        `Contoh: "Booking ustadz untuk kajian fiqih di Jakarta, Senin jam 19:00, 50 orang"`,
+        `Contoh: "Booking ustadz untuk kajian fiqih di Jakarta, Senin jam 19:00, 50 orang" atau "Undang ustadz untuk ceramah, Rabu jam 20:00"`,
       action: "clarify",
       parsedBooking: parsed,
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "clarify" },
@@ -432,8 +432,8 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
         } di database kami. Saya tawarkan yang tersedia; bila preferensi ini penting, saya bisa carikan di kota terdekat.`;
     }
     text +=
-      `\n\nJadwal & ketersediaan bisa dicek langsung di halaman booking:\n` +
-      `[Cek Jadwal & Booking ${picked.title} ${picked.name} →](/booking?ustadz=${picked.id})`;
+      `\n\nJadwal & ketersediaan bisa dicek langsung di halaman Undang Ustadz:\n` +
+      `[Cek Jadwal & Undang ${picked.title} ${picked.name} →](/booking?ustadz=${picked.id})`;
   } else {
     text = formatBookingPlan(parsed, ustadzName);
   }
@@ -527,13 +527,13 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
       };
       return {
         text:
-          `Booking dikonfirmasi.\n\n` +
+          `Undangan dikonfirmasi.\n\n` +
           `Ustadz: ${booking.ustadzName}\n` +
           `Acara: ${booking.eventName}\n` +
           `Hari: ${booking.day}, ${booking.time}\n` +
           `Lokasi: ${booking.location}\n\n` +
           `Permintaan sudah saya catat dan akan diteruskan ke ustadz. ` +
-          `Pantau statusnya di halaman [Booking](/booking).`,
+          `Pantau statusnya di halaman [Undang Ustadz](/booking).`,
         action: "booking_confirmed",
         booking,
         auditMeta: { confirmed: true },
@@ -547,7 +547,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
 
     if (isCancellation(message)) {
       return {
-        text: `Baik, rencana booking saya batalkan. Tidak ada yang tercatat.\n\nAda yang lain yang bisa saya bantu?`,
+        text: `Baik, rencana undangan saya batalkan. Tidak ada yang tercatat.\n\nAda yang lain yang bisa saya bantu?`,
         action: "booking_cancelled",
         auditMeta: { cancelled: true },
         context: {
@@ -569,7 +569,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
     return {
       text:
         `Wa'alaikumussalam warahmatullah. Saya asisten AI CariUstadz.\n\n` +
-        `Saya bisa membantu:\n• Mencari ustadz sesuai bidang, kota, atau nama\n• Menampilkan profil, rating, biaya, dan jadwal\n• Menyusun rencana booking (butuh persetujuan Anda)\n• Info kajian mendatang\n\n` +
+        `Saya bisa membantu:\n• Mencari ustadz sesuai bidang, kota, atau nama\n• Menampilkan profil, rating, biaya, dan jadwal\n• Menyusun rencana undangan (butuh persetujuan Anda)\n• Info kajian mendatang\n\n` +
         `Apa yang Anda butuhkan?`,
       action: "info",
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "greeting" },
@@ -583,8 +583,8 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
         `Saya asisten AI CariUstadz, bukan ustadz, dan tidak berwenang memberi fatwa.\n\n` +
         `Yang saya jaga:\n` +
         `1. Setiap rekomendasi disertai sumber: rating, jumlah ulasan, pengalaman\n` +
-        `2. Nomor kontak ustadz baru dibuka setelah booking dikonfirmasi\n` +
-        `3. Booking tidak pernah dieksekusi tanpa persetujuan Anda\n` +
+        `2. Nomor kontak ustadz baru dibuka setelah undangan dikonfirmasi\n` +
+        `3. Undangan tidak pernah dieksekusi tanpa persetujuan Anda\n` +
         `4. Kalau data tidak ada, saya katakan tidak ada, tidak menebak\n` +
         `5. Semua langkah tercatat di audit log\n\n` +
         `Saya juga memperhatikan waktu salat dan preferensi ustadz atau ustadzah.`,
@@ -605,9 +605,9 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
         `Alurnya empat langkah, dan langkah terakhir selalu Anda yang putuskan:\n\n` +
         `1. Anda sebutkan kebutuhan: jenis acara, hari, jam, kota, jumlah jamaah\n` +
         `2. Saya cek ketersediaan ustadz dan aturan budaya (misalnya Salat Jumat)\n` +
-        `3. Saya susun rencana booking dan tampilkan sumbernya (rating, pengalaman)\n` +
+        `3. Saya susun rencana undangan dan tampilkan sumbernya (rating, pengalaman)\n` +
         `4. Anda menyetujui — baru permintaan diteruskan ke ustadz\n\n` +
-        `Tidak ada booking yang berjalan tanpa persetujuan Anda. ` +
+        `Tidak ada undangan yang berjalan tanpa persetujuan Anda. ` +
         `Mau saya bantu susun rencananya sekarang?`,
       action: "info",
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "how_to_book" },
@@ -623,8 +623,8 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
     return {
       text:
         `Yang perlu Anda tahu soal data:\n\n` +
-        `• Riwayat booking dan chat disimpan di perangkat Anda sendiri (localStorage), bukan di server kami\n` +
-        `• Nomor kontak ustadz baru ditampilkan setelah booking dikonfirmasi\n` +
+        `• Riwayat undangan dan chat disimpan di perangkat Anda sendiri (localStorage), bukan di server kami\n` +
+        `• Nomor kontak ustadz baru ditampilkan setelah undangan dikonfirmasi\n` +
         `• Setiap langkah agen tercatat di audit log yang bisa Anda buka\n` +
         `• Saya tidak mengirim data Anda ke pihak ketiga\n\n` +
         `Anda bisa menghapus riwayat kapan saja lewat tombol reset di halaman Asisten.`,
@@ -717,7 +717,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
     return {
       text:
         formatList(top, `Berikut ${top.length} ustadz yang paling sesuai:`) +
-        `\n\n${notes.join(" ")}\n\nMau saya susun rencana booking untuk salah satu dari mereka?`,
+        `\n\n${notes.join(" ")}\n\nMau saya susun rencana undangan untuk salah satu dari mereka?`,
       action: "recommend",
       data: { list: top, text: "" },
       context: {
@@ -895,7 +895,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
               : `Saya menemukan ${list.length} ustadz yang sesuai:`
           ) +
           priceLine +
-          `\n\nMau saya buatkan rencana booking untuk salah satu dari mereka?`,
+          `\n\nMau saya buatkan rencana undangan untuk salah satu dari mereka?`,
         action: "search",
         data: { list: top, text: "" },
         context: {
@@ -996,7 +996,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
         `• "Rekomendasi ustadz terbaik" — lihat yang ratingnya paling tinggi\n` +
         `• "Berapa tarif ustadz Abdul Rahman?" — tanya biaya dan profil\n` +
         `• "Apakah ustadz Ahmad Zaki tersedia hari Sabtu?" — cek jadwal\n` +
-        `• "Booking ustadz untuk kajian, Senin jam 19:00, di Bandung, 50 orang"\n\n` +
+        `• "Undang ustadz untuk kajian, Senin jam 19:00, di Bandung, 50 orang"\n\n` +
         `Ceritakan saja kebutuhan Anda dengan bahasa sehari-hari, saya yang carikan.`,
       action: "info",
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "help" },
@@ -1010,7 +1010,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
       `Contoh yang bisa langsung saya kerjakan:\n` +
       `• "Cari ustadz fiqih di Jakarta"\n` +
       `• "Rekomendasi ustadz terbaik"\n` +
-      `• "Booking ustadz untuk kajian, Senin jam 19:00, di Bandung, 50 orang"\n` +
+      `• "Undang ustadz untuk kajian, Senin jam 19:00, di Bandung, 50 orang"\n` +
       `• "Kajian mendatang"\n` +
       `• "Profil Ustadz Ahmad Zaki"`,
     action: "info",

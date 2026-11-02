@@ -86,7 +86,7 @@ export default function VerificationModal({
               Nomor Terverifikasi!
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Booking Anda sedang diproses...
+              Undangan Anda sedang diproses...
             </p>
           </div>
         ) : (
@@ -100,14 +100,14 @@ export default function VerificationModal({
                   Verifikasi Nomor WhatsApp
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Langkah keamanan sebelum booking dibuat
+                  Langkah keamanan sebelum undangan dibuat
                 </p>
               </div>
             </div>
 
             <p className="mt-4 text-sm text-slate-600">
               Nomor terverifikasi dipakai ustadz menghubungi Anda dan mencegah
-              booking palsu.{" "}
+              undangan palsu.{" "}
               <span className="font-semibold text-slate-700">
                 Satu nomor = satu pemesan.
               </span>
@@ -187,7 +187,7 @@ export default function VerificationModal({
 
             <p className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-400">
               <ShieldCheck className="h-3 w-3" />
-              Nomor Anda hanya dipakai untuk konfirmasi booking — tidak
+              Nomor Anda hanya dipakai untuk konfirmasi undangan — tidak
               dibagikan ke pihak lain.
             </p>
           </>

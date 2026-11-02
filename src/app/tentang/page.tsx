@@ -24,7 +24,7 @@ const values = [
   {
     icon: Sparkles,
     title: "Mudah & Cepat",
-    desc: "Pencarian, booking, dan konsultasi dalam satu platform yang ringkas dan responsif.",
+    desc: "Pencarian, undangan, dan konsultasi dalam satu platform yang ringkas dan responsif.",
   },
   {
     icon: Users,
@@ -41,7 +41,7 @@ const features = [
   },
   {
     icon: Target,
-    title: "Booking Jadwal",
+    title: "Undang Ustadz",
     desc: "Pilih slot waktu yang tersedia dan kirim undangan untuk kajian atau acara Anda.",
   },
   {
@@ -131,7 +131,7 @@ export default function TentangPage() {
               </li>
               <li className="flex gap-2">
                 <span className="text-primary-500">✓</span>
-                Booking & konsultasi terpusat dalam satu platform.
+                Undang ustadz & konsultasi terpusat dalam satu platform.
               </li>
             </ul>
           </div>

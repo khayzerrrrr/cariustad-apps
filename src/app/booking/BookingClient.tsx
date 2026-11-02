@@ -148,14 +148,14 @@ export default function BookingClient({
         <div className="text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
             <CalendarCheck className="h-3.5 w-3.5" />
-            Booking Jadwal Kajian
+            Undang Ustadz
           </span>
           <h1 className="mt-3 font-display text-2xl font-bold text-slate-800 sm:text-3xl">
-            Ajak Ustadz ke Acara Anda
+            Undang Ustadz ke Acara Anda
           </h1>
           <p className="mx-auto mt-2 max-w-lg text-sm text-slate-500">
             Verifikasi nomor WhatsApp, pilih ustadz dan slot waktu, lalu kirim
-            detail undangan. Setiap booking melewati pemeriksaan anti-spam
+            detail undangan. Setiap undangan melewati pemeriksaan anti-spam
             untuk melindungi jadwal ustadz.
           </p>
         </div>
@@ -172,8 +172,8 @@ export default function BookingClient({
               <span className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
                 <ShieldCheck className="h-3.5 w-3.5 text-primary-500" />
                 {verified
-                  ? `Booking terverifikasi atas nama ${getVerifiedPhone()}`
-                  : "Booking wajib diverifikasi via WhatsApp — popup akan muncul saat kirim"}
+                  ? `Terverifikasi atas nama ${getVerifiedPhone()}`
+                  : "Undangan wajib diverifikasi via WhatsApp — popup akan muncul saat kirim"}
               </span>
               {verified && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
@@ -374,7 +374,7 @@ export default function BookingClient({
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-sand-300"
             >
               <ShieldCheck className="h-5 w-5" />
-              Kirim Undangan Booking
+              Kirim Undangan ke Ustadz
             </button>
             {!eventLocation && day && time && (
               <p className="text-center text-xs text-amber-600">
@@ -385,7 +385,7 @@ export default function BookingClient({
               <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                 <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
-                  <div className="font-semibold">Booking ditolak</div>
+                  <div className="font-semibold">Undangan ditolak</div>
                   <div className="mt-0.5">{guardError}</div>
                 </div>
               </div>
@@ -396,13 +396,13 @@ export default function BookingClient({
           <div className="rounded-2xl border border-sand-200 bg-white p-6">
             <h3 className="flex items-center gap-1.5 font-semibold text-slate-800">
               <History className="h-4 w-4 text-primary-500" />
-              Riwayat Booking
+              Riwayat Undangan
             </h3>
             {bookings.length === 0 ? (
               <div className="mt-4 rounded-xl border border-dashed border-sand-200 py-8 text-center">
                 <CalendarCheck className="mx-auto h-8 w-8 text-sand-300" />
                 <p className="mt-2 text-sm text-slate-400">
-                  Belum ada booking. Mulai buat undangan!
+                  Belum ada undangan. Mulai undang ustadz!
                 </p>
               </div>
             ) : (
@@ -503,7 +503,7 @@ export default function BookingClient({
                 Undangan Terkirim!
               </h3>
               <p className="mt-2 text-sm text-slate-500">
-                Booking untuk <strong>{success.ustadzName}</strong> pada{" "}
+                Undangan untuk <strong>{success.ustadzName}</strong> pada{" "}
                 <strong>{success.day}, {success.time}</strong> telah dibuat.
                 Ustadz akan mengkonfirmasi via chat.
               </p>
