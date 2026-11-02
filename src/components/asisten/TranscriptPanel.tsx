@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
-import { Shield, FileText, AlertTriangle } from "lucide-react";
+import { Shield, FileText, AlertTriangle, BookOpen } from "lucide-react";
 
 export interface ChatMessage {
   id: string;
@@ -90,6 +90,12 @@ export default function TranscriptPanel({ messages, isThinking }: TranscriptPane
               <div className="flex items-center gap-1.5 text-xs text-red-600 mb-1 font-medium">
                 <AlertTriangle className="w-3.5 h-3.5" />
                 Prompt Injection Diblokir
+              </div>
+            )}
+            {msg.role === "assistant" && msg.action === "dalil" && (
+              <div className="flex items-center gap-1.5 text-xs text-teal-700 mb-1 font-medium">
+                <BookOpen className="w-3.5 h-3.5" />
+                Mode Ustadz Hafizh — Dalil Terverifikasi
               </div>
             )}
             {msg.role === "assistant" && msg.action === "booking_plan" && (

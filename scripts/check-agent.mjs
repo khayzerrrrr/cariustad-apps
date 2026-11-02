@@ -30,6 +30,8 @@ const single = [
   { message: "berapa biaya ustadz tafsir di Jakarta", expectScope: "in_scope" },
   { message: "rekomendasi ustadz terbaik", expectScope: "in_scope" },
   { message: "kajian mendatang", expectScope: "in_scope" },
+  { message: "apa dalil tentang sabar", expectScope: "dalil_request" },
+  { message: "keutamaan sedekah", expectScope: "dalil_request" },
   { message: "apakah boleh sholat sambil duduk", expectScope: "religious_ruling" },
   { message: "siapa presiden amerika sekarang", expectScope: "off_topic" },
   { message: "buatkan kode python untuk sorting", expectScope: "off_topic" },

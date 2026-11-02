@@ -1,22 +1,48 @@
 /**
  * Scope Guard — memastikan agent hanya menjawab dalam konteks CariUstadz.
  *
- * Tiga hasil:
- *  - in_scope        → boleh dijawab (cari ustadz, booking, kajian, profil, dll)
- *  - religious_ruling → pertanyaan fatwa/hukum syariat → tidak dijawab, dialihkan ke ustadz
- *  - off_topic       → di luar domain → ditolak dengan sopan + contoh yang bisa ditanyakan
+ * Empat hasil:
+ *  - in_scope          → boleh dijawab (cari ustadz, booking, kajian, profil, dll)
+ *  - dalil_request     → permintaan dalil/makna ayat → Mode Ustadz Hafizh
+ *                        (jawab dengan kutipan terverifikasi, TANPA fatwa)
+ *  - religious_ruling  → fatwa/hukum syariat sensitif → tidak dijawab, dialihkan ke ustadz
+ *  - off_topic         → di luar domain → ditolak dengan sopan + contoh yang bisa ditanyakan
  *
  * Deterministik dan murah — jalan sebelum LLM, jadi LLM tidak pernah menerima
  * pertanyaan yang memang di luar wewenangnya.
  */
 
-export type ScopeVerdict = "in_scope" | "religious_ruling" | "off_topic";
+export type ScopeVerdict = "in_scope" | "dalil_request" | "religious_ruling" | "off_topic";
 
 export interface ScopeResult {
   verdict: ScopeVerdict;
   matched: string[];
   reply?: string;
 }
+
+/* ---------- Permintaan dalil → Mode Ustadz Hafizh ---------- */
+const DALIL_REQUEST = [
+  "apa dalil",
+  "dalilnya",
+  "dalil tentang",
+  "ayat tentang",
+  "ayat mengenai",
+  "ayat al-quran tentang",
+  "kata al-quran",
+  "al-quran tentang",
+  "hadis tentang",
+  "hadits tentang",
+  "hadis mengenai",
+  "hadis apa",
+  "keutamaan",
+  "pahala",
+  "makna ayat",
+  "arti ayat",
+  "maknanya ayat",
+  "apa makna",
+  "cara berdoa",
+  "doa untuk",
+];
 
 /* ---------- Pertanyaan hukum syariat ---------- */
 const RELIGIOUS_RULING = [
@@ -35,8 +61,6 @@ const RELIGIOUS_RULING = [
   "bidah",
   "menurut islam",
   "menurut syariat",
-  "dalilnya",
-  "apa dalil",
   "mazhab",
   "ijma ulama",
   "qiyas",
@@ -277,7 +301,14 @@ export function checkScope(message: string): ScopeResult {
     return { verdict: "in_scope", matched: taskHits };
   }
 
-  // 1. Hukum syariat lebih spesifik daripada off-topic
+  // 1. Permintaan dalil → Mode Ustadz Hafizh (kutipan terverifikasi, tanpa fatwa)
+  //     Contoh: "apa dalil tentang sabar", "hadis tentang sedekah"
+  const dalilHits = DALIL_REQUEST.filter((k) => msg.includes(k));
+  if (dalilHits.length > 0) {
+    return { verdict: "dalil_request", matched: dalilHits };
+  }
+
+  // 2. Hukum syariat lebih spesifik daripada off-topic
   const religiousHits = RELIGIOUS_RULING.filter((k) => msg.includes(k));
   if (religiousHits.length > 0) {
     return {

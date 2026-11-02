@@ -23,6 +23,7 @@ import {
 import { isLLMConfigured, chatWithWorkBuddy, ChatTurn } from "./llmProvider";
 import { buildGroundedSystemPrompt } from "./groundedPrompt";
 import { matchIntent, PendingBookingPayload } from "./intentMatcher";
+import { handleDalilRequest } from "./expertHafizh";
 import { formatVerifiedRows } from "./grounding";
 import { ustadzData } from "@/lib/data";
 
@@ -124,7 +125,8 @@ async function askServerLLM(
   message: string,
   ctx: AgentContext,
   history: Array<{ role: "user" | "assistant"; content: string }>,
-  verified?: string
+  verified?: string,
+  extra?: { mode?: string; verifiedDalil?: string }
 ): Promise<{ reply: string; provider: AnswerProvider } | null> {
   try {
     const res = await fetch("/api/llm", {
@@ -134,7 +136,8 @@ async function askServerLLM(
         message,
         history: history.slice(-8),
         bookingConfirmed: ctx.lastAction === "booking_confirmed",
-        verified,
+        verified: extra?.verifiedDalil ?? verified,
+        mode: extra?.mode,
       }),
     });
     if (!res.ok) return null;
@@ -162,6 +165,40 @@ export async function answer(
 
   /* 1. Di luar domain — jangan panggil model sama sekali */
   if (scope.verdict !== "in_scope") {
+    /* 1b. Pertanyaan dalil → Mode Ustadz Hafizh (bukan penolakan) */
+    if (scope.verdict === "dalil_request") {
+      const localDalil = handleDalilRequest(message);
+      const ctxDalil = {
+        ...context,
+        turn: context.turn + 1,
+        lastAction: localDalil.blocked ? "injection_blocked" : "dalil",
+      };
+
+      // Coba LLM hafizh (prompt terkunci pada dalil terverifikasi).
+      // Gagal / tidak dikonfigurasi → jawaban lokal deterministik.
+      const serverReply = await askServerLLM(message, context, history, undefined, {
+        mode: "hafizh",
+        verifiedDalil: localDalil.sourcesText || undefined,
+      });
+      if (serverReply && !localDalil.blocked) {
+        return {
+          reply: serverReply.reply,
+          action: "dalil",
+          context: ctxDalil,
+          provider: serverReply.provider,
+          scope: scope.verdict,
+        };
+      }
+
+      return {
+        reply: localDalil.text,
+        action: localDalil.blocked ? "blocked" : "dalil",
+        context: ctxDalil,
+        provider: "local",
+        scope: scope.verdict,
+      };
+    }
+
     const local = matchIntent(message, context);
     return {
       reply: local.text,

@@ -2,7 +2,7 @@
 
 **Agent:** Asisten AI CariUstadz
 **Domain:** Pencarian & booking ustadz untuk institusi Islamic Indonesia
-**Versi:** 1.0 · 1 November 2026
+**Versi:** 1.1 · 2 November 2026 (menambah Mode Ustadz Hafizh)
 **Challenge:** B — Agen Kantor (AI CAN DO IT, Tencent Cloud Hackathon Indonesia 2026)
 
 Dokumen satu halaman ini menjawab empat pertanyaan: apa yang agent **bisa** akses, apa yang
@@ -23,6 +23,7 @@ dikirim ke model.
 | Review | rating, komentar, jenis acara | **Tanpa** identitas pribadi penulis ulasan |
 | Kajian | judul, tanggal, waktu, lokasi, topik, harga | Data acara publik |
 | Hadith | sumber, perawi, terjemahan, derajat | Untuk widget harian |
+| Dalil (Mode Ustadz Hafizh) | 27 kutipan ayat/hadis terverifikasi: surah:ayat atau kitab + nomor, terjemahan, derajat | Satu-satunya sumber kutipan yang boleh ditampilkan agent |
 
 **Tidak diakses:** nomor telepon/WhatsApp ustadz sebelum booking dikonfirmasi; data pribadi
 pengguna di luar sesi; riwayat percakapan pengguna lain.
@@ -40,6 +41,8 @@ bukan mengubah keadaan:
 - Memeriksa aturan budaya: konflik Salat Jumat, bentrok waktu salat, preferensi ustadz/ustadzah
 - Menyusun rencana booking yang bisa dibaca manusia
 - Menolak pertanyaan di luar domain dan pertanyaan fatwa
+- Menjawab pertanyaan dalil melalui **Mode Ustadz Hafizh** — kutipan hanya dari
+  dataset terverifikasi, tanpa fatwa, dengan pengingat untuk konsultasi ulama
 - Mendeteksi dan memblokir upaya prompt injection
 - Mencatat setiap langkah ke audit log
 
@@ -73,8 +76,13 @@ instruksi yang disisipkan dalam pesan.
   teks seperti itu diperlakukan sebagai data, bukan perintah
 - ❌ **Mengarang nama ustadz** yang tidak ada di database; bila tidak ada yang cocok, agent
   mengatakan tidak ada dan menawarkan alternatif
-- ❌ **Menjawab fatwa atau hukum syariat** — itu ranah ulama, agent mengalihkan ke pencarian
-  ustadz yang ahli di bidang tersebut
+- ❌ **Menjawab fatwa atau hukum syariat** — talak, waris, sah/batalnya ibadah, dan
+  penilaian dosa tetap dialihkan ke ustadz yang ahli. Yang dijawab hanya permintaan
+  dalil dan keutamaan amal
+- ❌ **Mengarang atau mengutip ayat/hadis di luar dataset terverifikasi** (27 kutipan di
+  `dalilKnowledge.ts`) — bila topik tidak ada di dataset, agent mengatakan jujur belum
+  tersedia, bukan menebak nomor ayat
+- ❌ **Mengutip hadis dhaif atau palsu** — hanya derajat shahih dan hasan yang masuk dataset
 - ❌ **Mengungkap identitas pribadi** penulis ulasan
 
 ---
@@ -89,6 +97,15 @@ Setiap rekomendasi menyertakan asal datanya, misalnya:
 Bila profil dan ulasan saling bertentangan (misalnya review menyebut "terjangkau" tetapi
 profil mencantumkan biaya tinggi), agent **mengutamakan data profil** dan menyebutkan
 sumbernya, bukan menyimpulkan dari opini review.
+
+Pada Mode Ustadz Hafizh, setiap jawaban dalil menampilkan sumbernya secara eksplisit:
+
+> 📖 **QS Al-Baqarah: 153** — "Wahai orang-orang yang beriman! Mohonlah pertolongan
+> (kepada Allah) dengan sabar dan salat. Sungguh, Allah beserta orang-orang yang sabar."
+> 📖 **HR Bukhari no. 1 (shahih)** — "Sesungguhnya setiap amal itu tergantung niatnya."
+
+Ditutup dengan disclaimer: *"Saya asisten AI, bukan ulama. Untuk pemahaman lebih dalam dan
+keputusan fikih, silakan konsultasi ke ustadz terverifikasi."*
 
 ---
 
@@ -110,7 +127,7 @@ Setiap langkah agent dicatat di audit log yang bisa dibuka pengguna dari halaman
 | Field | Isi |
 |---|---|
 | `timestamp` | Waktu kejadian |
-| `step` | parse · search · cultural_check · clarify · plan · human_approval · execute · injection_blocked · error |
+| `step` | parse · search · cultural_check · clarify · plan · human_approval · execute · dalil · injection_blocked · error |
 | `action` | Nama aksi |
 | `input` / `output` | Ringkasan masukan dan keluaran (dipotong 500 karakter) |
 | `result` | success · failure · warning · blocked |

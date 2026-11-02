@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Shield, ScrollText, AlertTriangle, Sparkles } from "lucide-react";
+import { Send, Shield, ScrollText, AlertTriangle, Sparkles, BookOpen } from "lucide-react";
 import { avatarReducer, AvatarState, AvatarAction } from "@/lib/avatar/stateMachine";
 import { getVoiceEngine } from "@/lib/avatar/voiceEngine";
 import { logAudit, getAuditLog, AuditEntry } from "@/lib/ai/auditLog";
@@ -102,7 +102,7 @@ export default function AsistenClient() {
         id: `greeting-${Date.now()}`,
         role: "assistant",
         content:
-          "Assalamu'alaikum warahmatullah. Saya Asisten AI CariUstadz, siap membantu Anda menemukan dan booking ustadz terverifikasi. Silakan ceritakan kebutuhan Anda — bisa dengan mengetik atau berbicara.",
+          "Assalamu'alaikum warahmatullah. Saya Asisten AI CariUstadz, siap membantu Anda menemukan dan booking ustadz terverifikasi. Saya juga punya Mode Ustadz Hafizh — silakan tanya dalil Al-Quran atau hadis. Ceritakan kebutuhan Anda dengan mengetik atau berbicara.",
         timestamp: Date.now(),
       };
       setMessages([greetingMsg]);
@@ -644,6 +644,14 @@ export default function AsistenClient() {
                   <Shield className="w-3 h-3 text-emerald-500" />
                   Full Audit Trail
                 </div>
+                <div className="flex items-center gap-1.5">
+                  <BookOpen className="w-3 h-3 text-teal-500" />
+                  Mode Ustadz Hafizh — Dalil Terverifikasi
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Shield className="w-3 h-3 text-emerald-500" />
+                  Tidak Berfatwa — Rujuk Ulama
+                </div>
               </div>
               {injectionCount > 0 && (
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-red-600 font-medium">
@@ -755,6 +763,8 @@ export default function AsistenClient() {
               {[
                 "Cari ustadz fiqih di Jakarta",
                 "Booking ustadz untuk kajian di Bandung, Senin jam 19:00",
+                "Apa dalil tentang sabar?",
+                "Keutamaan sedekah",
                 "Rekomendasi ustadz terbaik",
                 "Kajian mendatang",
               ].map((prompt) => (

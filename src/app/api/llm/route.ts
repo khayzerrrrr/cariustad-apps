@@ -9,6 +9,7 @@ import {
   detectUnknownUstadzNames,
   redactContactBeforeApproval,
 } from "@/lib/ai/scopeGuard";
+import { buildHafizhSystemPrompt } from "@/lib/ai/expertHafizh";
 import { detectPromptInjection } from "@/lib/ai/promptGuard";
 import { ustadzData } from "@/lib/data";
 
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
     history?: Array<{ role: "user" | "assistant"; content: string }>;
     bookingConfirmed?: boolean;
     verified?: string;
+    mode?: string;
   };
 
   try {
@@ -73,8 +75,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Batas domain ditegakkan di server, bukan hanya di klien.
+  // "dalil_request" lolos — ditangani Mode Ustadz Hafizh di bawah.
   const scope = checkScope(message);
-  if (scope.verdict !== "in_scope") {
+  const hafizhMode = body.mode === "hafizh" || scope.verdict === "dalil_request";
+  if (scope.verdict !== "in_scope" && !hafizhMode) {
     return NextResponse.json(
       { error: "out_of_scope", scope: scope.verdict },
       { status: 422 }
@@ -88,8 +92,12 @@ export async function POST(req: NextRequest) {
      * sendiri, sehingga tidak mungkin memasukkan ustadz dari kota lain.
      */
     const verified = (body.verified ?? "").slice(0, 4000).trim();
-    const systemPrompt = verified
-      ? `${buildRulesPrompt()}
+    let systemPrompt: string;
+    if (hafizhMode) {
+      // Mode Ustadz Hafizh: kutipan terkunci pada dalil terverifikasi.
+      systemPrompt = buildHafizhSystemPrompt(verified || undefined);
+    } else if (verified) {
+      systemPrompt = `${buildRulesPrompt()}
 
 === DATA HASIL PENCARIAN (SUDAH DISARING OTOMATIS, TERVERIFIKASI) ===
 ${verified}
@@ -98,8 +106,10 @@ ATURAN DATA:
 - Jawab HANYA dari baris di atas. Jangan menambah ustadz lain di luar daftar.
 - Jangan mengubah angka apa pun (rating, ulasan, biaya, pengalaman, jadwal).
 - Jangan mengarang slot jadwal yang tidak tertulis di atas.
-- Sebutkan kota/area apa adanya; jangan memindahkan ustadz ke kota lain.`
-      : buildGroundedSystemPrompt();
+- Sebutkan kota/area apa adanya; jangan memindahkan ustadz ke kota lain.`;
+    } else {
+      systemPrompt = buildGroundedSystemPrompt();
+    }
 
     const result = await generateReply({
       systemPrompt,

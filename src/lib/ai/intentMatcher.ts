@@ -12,6 +12,7 @@ import { parseBookingRequest, formatBookingPlan, ParsedBookingRequest } from "./
 import { checkCulturalRules, suggestAlternativeTimes, shouldRecommendUstadzah } from "./culturalRules";
 import { detectPromptInjection } from "./promptGuard";
 import { checkScope } from "./scopeGuard";
+import { handleDalilRequest } from "./expertHafizh";
 import {
   AgentContext,
   EMPTY_CONTEXT,
@@ -28,6 +29,7 @@ export type IntentAction =
   | "profile"
   | "guide"
   | "info"
+  | "dalil"
   | "booking_plan"
   | "booking_confirmed"
   | "booking_cancelled"
@@ -483,6 +485,23 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
 
   /* 1. Batas domain, jangan menjawab di luar konteks */
   const scope = checkScope(message);
+  if (scope.verdict === "dalil_request") {
+    /* Mode Ustadz Hafizh — jawab dengan dalil terverifikasi */
+    const dalil = handleDalilRequest(message);
+    return {
+      text: dalil.text,
+      action: dalil.blocked ? "blocked" : "dalil",
+      auditMeta: {
+        scope: scope.verdict,
+        sources: dalil.sources.map((s) => s.citation),
+      },
+      context: {
+        ...ctx,
+        turn: ctx.turn + 1,
+        lastAction: dalil.blocked ? "injection_blocked" : "dalil",
+      },
+    };
+  }
   if (scope.verdict !== "in_scope") {
     return {
       text: scope.reply ?? "Maaf, itu di luar jangkauan saya.",

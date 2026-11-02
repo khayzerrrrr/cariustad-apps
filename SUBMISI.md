@@ -60,7 +60,7 @@ menerjemahkan itu ke konteks yang konkret di Indonesia:
 |---|---|
 | Memahami instruksi bahasa alami | "saya mau booking ustadz untuk kajian, Senin jam 19:00, di Bandung, 50 orang" → parameter terstruktur tanpa formulir |
 | Mengambil tindakan, bukan hanya menjawab | Status booking benar-benar berubah dan muncul di halaman Booking |
-| Menjaga batas kewenangan | Menolak berfatwa; menolak topik di luar domain |
+| Menjaga batas kewenangan | Menolak berfatwa; menolak topik di luar domain; berbagi dalil hanya dari kutipan terverifikasi |
 | Meminta persetujuan sebelum eksekusi | Rencana ditampilkan dulu; eksekusi hanya setelah kata "setuju" |
 | Dapat diaudit | Setiap langkah tercatat dan dapat dibuka pengguna |
 | Peka konteks lokal | Salat Jumat, waktu salat, preferensi gender |
@@ -129,7 +129,8 @@ banyak orang.
 Agen yang selalu menjawab akan berhalusinasi tentang ketersediaan ustadz, tarif,
 dan jadwal. Dalam konteks keagamaan, jawaban salah bukan sekadar tidak nyaman —
 ia bisa menyesatkan. Karena itu agen ini dirancang untuk **lebih sering menolak
-daripada menjawab**: pertanyaan fatwa dialihkan ke ulama, topik di luar domain
+daripada menjawab**: pertanyaan fatwa dialihkan ke ulama, pertanyaan dalil
+dijawab hanya dari kutipan terverifikasi, topik di luar domain
 ditolak, dan jadwal yang melanggar aturan budaya tidak dipaksakan.
 
 **2. Persetujuan manusia harus menjadi titik henti yang nyata.**
@@ -168,18 +169,30 @@ boundary ada di `DIAGRAM_ARSITEKTUR.html`.
 | 1 | Prompt Guard — 23 pola injeksi (ID + EN) | deterministik |
 | 2 | Scope Guard — klasifikasi domain | deterministik |
 | 3 | Cultural Rules — Salat Jumat, gender, waktu salat | deterministik |
+| 3b | Dalil Grounding — kutipan ayat/hadis hanya dari dataset terverifikasi (27 kutipan) | deterministik |
 | 4 | System prompt — instruksi perilaku | probabilistik |
 | 5 | Validasi keluaran — tolak kebocoran penalaran | deterministik |
 
 Lapisan 4 sengaja diletakkan paling dalam. Jika model gagal patuh, lapisan 1–3
 sudah menahan lebih dulu.
 
+**Mode Ustadz Hafizh.** Pertanyaan dalil ("apa dalil tentang sabar", "keutamaan
+sedekah") dulu ditolak mentah. Kini dijawab melalui mode ahli berbasis 27
+kutipan ayat dan hadis shahih/hasan yang tersimpan di kode
+(`src/lib/ai/dalilKnowledge.ts`) — lengkap dengan sumber, derajat hadis, makna,
+dan penerapan praktis. Batasnya tetap keras: agen berbagi dalil, bukan
+berfatwa. Talak, waris, sah/batalnya ibadah, dan penilaian dosa tetap
+dialihkan ke ustadz. Ketika LLM tidak tersedia, mode ini tetap menjawab dari
+dataset lokal — jawaban dalil tidak boleh bergantung pada model yang bisa
+halusinasi nomor ayat.
+
 **Avatar & suara.** Karakter 2D SVG dengan lip-sync yang digerakkan
 `SpeechSynthesisUtterance.onboundary` — posisi karakter dikoreksi setiap boundary,
 diinterpolasi di antaranya. Tanpa WebGL, tanpa API berbayar.
 
-**Pengujian.** 80 pemeriksaan otomatis terhadap production, semuanya lulus pada
-commit yang disubmit. Rincian dan output mentah di `HASIL_PENGUJIAN.html`.
+**Pengujian.** 115 pemeriksaan otomatis terhadap production dan logika murni,
+semuanya lulus pada commit yang disubmit. Rincian dan output mentah di
+`HASIL_PENGUJIAN.html`.
 Termasuk satu celah prompt injection berbahasa Inggris yang kami temukan sendiri
 dan perbaiki.
 
@@ -220,7 +233,9 @@ Uji terhadap production:
 ```bash
 export BASE_URL=https://cariustad-apps.vercel.app
 npm run test:http    # 22 pemeriksaan route + guard
-npm run test:agent   # 9 skenario batas domain + alur booking
+npm run test:agent   # 11 skenario batas domain, dalil, + alur booking
 npm run test:guard   # 32 pemeriksaan prompt injection
+npm run test:expert  # 35 pemeriksaan Mode Ustadz Hafizh & grounding dalil
+npm run test:voice   # 12 pemeriksaan logika TTS
 npm run test:lipsync # 8 pemeriksaan geometri avatar
 ```

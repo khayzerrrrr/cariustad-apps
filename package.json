@@ -14,6 +14,7 @@
     "test:avatar": "npx tsx scripts/check-photo-avatar.ts",
     "test:voice": "npx tsx scripts/check-voice.ts",
     "test:guard": "node --experimental-strip-types scripts/check-prompt-guard.ts",
+    "test:expert": "npx tsx scripts/check-expert.ts",
     "test:bookingguard": "node --experimental-strip-types scripts/check-booking-guard.ts",
     "test:http": "node scripts/check-http.mjs",
     "test:agent": "node scripts/check-agent.mjs"
