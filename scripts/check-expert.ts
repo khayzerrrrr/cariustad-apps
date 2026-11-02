@@ -15,6 +15,7 @@
  * Jalankan (lokal, tanpa server): npm run test:expert
  */
 import { DALIL_DATA, findDalil, dalilCount } from "../src/lib/ai/dalilKnowledge.ts";
+import dalilDbJson from "../dalil-db/dalil.json";
 import {
   answerDalilLocal,
   handleDalilRequest,
@@ -65,6 +66,28 @@ check(
   "dataset: semua hadis mencantumkan derajat",
   unverified.length === 0,
   unverified.map((d) => d.citation).join(", ")
+);
+
+const badVerify = DALIL_DATA.filter(
+  (d) => !d.verifyUrl || !/^https:\/\/(sunnah\.com|quran\.com)\//.test(d.verifyUrl)
+);
+check(
+  "dataset: semua entri punya verifyUrl ke sunnah.com/quran.com",
+  badVerify.length === 0,
+  badVerify.map((d) => d.citation).join(", ")
+);
+
+/* 1b. Sinkronisasi dalil-db/dalil.json ↔ aplikasi web */
+const jsonEntries = dalilDbJson.entries as Array<{ id: string }>;
+check(
+  "dalil-db: JSON di folder mandiri sinkron dengan aplikasi web",
+  jsonEntries.length === DALIL_DATA.length &&
+    jsonEntries.every((j, i) => j.id === DALIL_DATA[i].id)
+);
+check(
+  "dalil-db: metadata count konsisten",
+  dalilDbJson.count === jsonEntries.length,
+  `metadata: ${dalilDbJson.count}, aktual: ${jsonEntries.length}`
 );
 
 console.log(`     (basis data: ${dalilCount()} dalil terverifikasi)`);

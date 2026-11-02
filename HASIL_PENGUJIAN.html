@@ -123,7 +123,7 @@ menjalankan ulang dan membandingkan hasilnya.
   <div><b>8/8</b><span>Lip-sync avatar</span></div>
 </div>
 <p style="font-size:12.5px;color:var(--muted);margin-top:2px">
-Total 115 pemeriksaan otomatis, 0 kegagalan pada commit yang diuji.
+Total 118 pemeriksaan otomatis, 0 kegagalan pada commit yang diuji.
 </p>
 
 <h2><span class="num">1</span>Lingkungan pengujian</h2>
@@ -303,14 +303,19 @@ rencana booking) merespons tanpa panggilan jaringan.
 <h2><span class="num">5</span>Mode Ustadz Hafizh: grounding dalil Al-Quran &amp; hadis</h2>
 <p>Perintah: <code>npm run test:expert</code> (logika murni, tanpa jaringan dan tanpa kunci API)</p>
 <p>Mode ini menjawab pertanyaan dalil (<em>&ldquo;apa dalil tentang sabar&rdquo;</em>) dengan kutipan
-yang <strong>wajib</strong> berasal dari dataset terverifikasi di kode
-(<code>src/lib/ai/dalilKnowledge.ts</code>). Fatwa tetap ditolak dan dirujuk ke ustadz —
+yang <strong>wajib</strong> berasal dari dataset terverifikasi
+(<code>dalil-db/dalil.json</code> — folder mandiri yang juga bisa dijalankan sendiri
+tanpa AI lewat <code>node dalil-db/cari.mjs</code>). Setiap entri punya tautan
+verifikasi ke sunnah.com/quran.com. Fatwa tetap ditolak dan dirujuk ke ustadz —
 agen berbagi dalil, bukan menetapkan hukum.</p>
 <pre><span class="ok">OK</span>   dataset: semua kutipan berformat QS/HR valid
 <span class="ok">OK</span>   dataset: tidak ada sumber ganda
 <span class="ok">OK</span>   dataset: semua entri punya teks, makna, penerapan, topik
 <span class="ok">OK</span>   dataset: semua hadis mencantumkan derajat
-     (basis data: 27 dalil terverifikasi)
+<span class="ok">OK</span>   dataset: semua entri punya verifyUrl ke sunnah.com/quran.com
+<span class="ok">OK</span>   dalil-db: JSON di folder mandiri sinkron dengan aplikasi web
+<span class="ok">OK</span>   dalil-db: metadata count konsisten
+     (basis data: 26 dalil terverifikasi)
 <span class="ok">OK</span>   scope: "apa dalil tentang sabar" -&gt; dalil_request
 <span class="ok">OK</span>   scope: "keutamaan sedekah" -&gt; dalil_request
 <span class="ok">OK</span>   scope: "hukum talak di depan saksi" -&gt; religious_ruling (tetap ditolak)
@@ -321,7 +326,7 @@ agen berbagi dalil, bukan menetapkan hukum.</p>
 <span class="ok">OK</span>   injection dalam pertanyaan dalil diblokir
 <span class="ok">OK</span>   system prompt: memuat semua dalil terverifikasi
 
-Selesai: 35 lulus, 0 gagal.</pre>
+Selesai: 38 lulus, 0 gagal.</pre>
 <div class="callout">
   <p><strong>Catatan desain.</strong> Ketika LLM tidak tersedia (kuota habis, jaringan mati),
   mode Hafizh <em>tetap menjawab</em> dari dataset lokal — jawaban dalil tidak boleh
@@ -382,8 +387,7 @@ bukan dari laporan pihak luar.</p>
   <em>tanpa</em> — dan itu merusak produk lebih parah daripada celah yang ditutup.</p>
 </div>
 
-<h3>6.2 Kegagalan uji yang ternyata salah di pihak penguji <span class="pill fail">TES YANG SALAH</span></h3>
-<div class="callout warn">
+<h3>6.2 Kegagalan uji yang ternyata salah di pihak penguji <span class="pill fail">TES YANG SALAH</span></h3><div class="callout warn">
   <p>Versi pertama <code>check-http.mjs</code> melaporkan <code>/ustadz/u01</code> → 404.
   Setelah diperiksa, ID sebenarnya adalah <code>u1</code>; skrip uji yang salah,
   bukan aplikasi. Skrip diperbaiki dan dilaporkan ulang sebagai lulus.</p>
@@ -407,11 +411,30 @@ bukan dari laporan pihak luar.</p>
   <code>0,42</code>. Sejak itu avatar diganti sepenuhnya dengan karakter 2D SVG.</p>
 </div>
 
-<h3>5.4 Vercel menolak Node 20 <span class="pill pass">DIPERBAIKI</span></h3>
+<h3>6.4 Vercel menolak Node 20 <span class="pill pass">DIPERBAIKI</span></h3>
 <div class="callout warn">
   <p>Build gagal: <code>Node.js Version "20.x" is discontinued and must be upgraded.</code>
   <code>engines.node</code> dinaikkan ke <code>22.x</code> (bukan 26.x) agar cocok
   dengan versi yang sudah diverifikasi lokal.</p>
+</div>
+
+<h3>6.5 Dua hadis populer ternyata dhaif saat diverifikasi ke sunnah.com <span class="pill fail">DIPERBAIKI</span></h3>
+<div class="callout bad">
+  <p><strong>Gejala.</strong> Spot-check manual kutipan Mode Hafizh ke
+  <code>sunnah.com</code> menemukan dua masalah: HR Tirmidzi no. 3371
+  (&ldquo;doa adalah inti ibadah&rdquo;) dan HR Tirmidzi no. 2499 (&ldquo;setiap anak
+  Adam salah&rdquo;) keduanya berderajat <strong>dhaif</strong> menurut Darussalam —
+  melanggar kebijakan dataset sendiri (hanya shahih/hasan). Satu kutipan lagi,
+  HR Abu Dawud no. 61, redaksi terjemahannya tidak cocok dengan hadis
+  sebenarnya.</p>
+  <p><strong>Perbaikan.</strong> Kutipan dhaif dihapus; entri taubat diganti
+  HR Muslim no. 2747 (shahih); redaksi Abu Dawud no. 61 dikoreksi; derajat
+  Tirmidzi no. 2396 disesuaikan ke &ldquo;hasan&rdquo;. Setiap entri kini wajib
+  menyertakan <code>verifyUrl</code> dan pemeriksaan otomatis baru menegakkan
+  format itu.</p>
+  <p><strong>Pelajarannya.</strong> Populer tidak sama dengan shahih. Validasi
+  ke sumber primer (sunnah.com, dorar.net) harus dilakukan per kutipan, bukan
+  dari ingatan — bahkan oleh penyusun yang berhati-hati.</p>
 </div>
 
 <h2><span class="num">7</span>Lip-sync avatar 2D</h2>
@@ -483,7 +506,8 @@ node scripts/check-deepseek.mjs   <span class="dim"># perutean penyedia LLM</spa
 
 <span class="dim"># 3. Uji logika murni (tanpa jaringan)</span>
 npm run test:guard     <span class="dim"># 32 pemeriksaan: 15 serangan + 17 pertanyaan wajar</span>
-npm run test:expert    <span class="dim"># 35 pemeriksaan mode Ustadz Hafizh &amp; grounding dalil</span>
+npm run test:expert    <span class="dim"># 38 pemeriksaan mode Ustadz Hafizh &amp; grounding dalil</span>
+npm run dalil          <span class="dim"># CLI mandiri: jawab dalil tanpa AI (node dalil-db/cari.mjs)</span>
 npm run test:voice     <span class="dim"># 12 pemeriksaan logika TTS &amp; sanitasi teks</span>
 npm run test:lipsync   <span class="dim"># 8 pemeriksaan geometri mulut avatar</span></pre>
 

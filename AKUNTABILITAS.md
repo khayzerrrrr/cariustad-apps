@@ -23,7 +23,7 @@ dikirim ke model.
 | Review | rating, komentar, jenis acara | **Tanpa** identitas pribadi penulis ulasan |
 | Kajian | judul, tanggal, waktu, lokasi, topik, harga | Data acara publik |
 | Hadith | sumber, perawi, terjemahan, derajat | Untuk widget harian |
-| Dalil (Mode Ustadz Hafizh) | 27 kutipan ayat/hadis terverifikasi: surah:ayat atau kitab + nomor, terjemahan, derajat | Satu-satunya sumber kutipan yang boleh ditampilkan agent |
+| Dalil (Mode Ustadz Hafizh) | 26 kutipan ayat/hadis terverifikasi: surah:ayat atau kitab + nomor, terjemahan, derajat, tautan verifikasi | Satu-satunya sumber kutipan yang boleh ditampilkan agent; tersimpan di `dalil-db/dalil.json` |
 
 **Tidak diakses:** nomor telepon/WhatsApp ustadz sebelum booking dikonfirmasi; data pribadi
 pengguna di luar sesi; riwayat percakapan pengguna lain.
@@ -79,8 +79,9 @@ instruksi yang disisipkan dalam pesan.
 - ❌ **Menjawab fatwa atau hukum syariat** — talak, waris, sah/batalnya ibadah, dan
   penilaian dosa tetap dialihkan ke ustadz yang ahli. Yang dijawab hanya permintaan
   dalil dan keutamaan amal
-- ❌ **Mengarang atau mengutip ayat/hadis di luar dataset terverifikasi** (27 kutipan di
-  `dalilKnowledge.ts`) — bila topik tidak ada di dataset, agent mengatakan jujur belum
+- ❌ **Mengarang atau mengutip ayat/hadis di luar dataset terverifikasi** (26 kutipan di
+  `dalil-db/dalil.json`, masing-masing dengan tautan verifikasi ke sunnah.com/quran.com) —
+  bila topik tidak ada di dataset, agent mengatakan jujur belum
   tersedia, bukan menebak nomor ayat
 - ❌ **Mengutip hadis dhaif atau palsu** — hanya derajat shahih dan hasan yang masuk dataset
 - ❌ **Mengungkap identitas pribadi** penulis ulasan

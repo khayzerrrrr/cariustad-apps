@@ -169,7 +169,7 @@ boundary ada di `DIAGRAM_ARSITEKTUR.html`.
 | 1 | Prompt Guard — 23 pola injeksi (ID + EN) | deterministik |
 | 2 | Scope Guard — klasifikasi domain | deterministik |
 | 3 | Cultural Rules — Salat Jumat, gender, waktu salat | deterministik |
-| 3b | Dalil Grounding — kutipan ayat/hadis hanya dari dataset terverifikasi (27 kutipan) | deterministik |
+| 3b | Dalil Grounding — kutipan ayat/hadis hanya dari dataset terverifikasi (26 kutipan, masing-masing dengan tautan verifikasi) | deterministik |
 | 4 | System prompt — instruksi perilaku | probabilistik |
 | 5 | Validasi keluaran — tolak kebocoran penalaran | deterministik |
 
@@ -177,10 +177,12 @@ Lapisan 4 sengaja diletakkan paling dalam. Jika model gagal patuh, lapisan 1–3
 sudah menahan lebih dulu.
 
 **Mode Ustadz Hafizh.** Pertanyaan dalil ("apa dalil tentang sabar", "keutamaan
-sedekah") dulu ditolak mentah. Kini dijawab melalui mode ahli berbasis 27
-kutipan ayat dan hadis shahih/hasan yang tersimpan di kode
-(`src/lib/ai/dalilKnowledge.ts`) — lengkap dengan sumber, derajat hadis, makna,
-dan penerapan praktis. Batasnya tetap keras: agen berbagi dalil, bukan
+sedekah") dulu ditolak mentah. Kini dijawab melalui mode ahli berbasis 26
+kutipan ayat dan hadis shahih/hasan yang tersimpan di `dalil-db/dalil.json`
+— folder mandiri yang juga bisa dijalankan sendiri tanpa AI
+(`node dalil-db/cari.mjs "apa dalil tentang sabar"`), lengkap dengan sumber,
+derajat hadis, makna, penerapan praktis, dan tautan verifikasi per kutipan
+(sunnah.com / quran.com). Batasnya tetap keras: agen berbagi dalil, bukan
 berfatwa. Talak, waris, sah/batalnya ibadah, dan penilaian dosa tetap
 dialihkan ke ustadz. Ketika LLM tidak tersedia, mode ini tetap menjawab dari
 dataset lokal — jawaban dalil tidak boleh bergantung pada model yang bisa
@@ -190,7 +192,7 @@ halusinasi nomor ayat.
 `SpeechSynthesisUtterance.onboundary` — posisi karakter dikoreksi setiap boundary,
 diinterpolasi di antaranya. Tanpa WebGL, tanpa API berbayar.
 
-**Pengujian.** 115 pemeriksaan otomatis terhadap production dan logika murni,
+**Pengujian.** 118 pemeriksaan otomatis terhadap production dan logika murni,
 semuanya lulus pada commit yang disubmit. Rincian dan output mentah di
 `HASIL_PENGUJIAN.html`.
 Termasuk satu celah prompt injection berbahasa Inggris yang kami temukan sendiri
@@ -235,7 +237,7 @@ export BASE_URL=https://cariustad-apps.vercel.app
 npm run test:http    # 22 pemeriksaan route + guard
 npm run test:agent   # 11 skenario batas domain, dalil, + alur booking
 npm run test:guard   # 32 pemeriksaan prompt injection
-npm run test:expert  # 35 pemeriksaan Mode Ustadz Hafizh & grounding dalil
+npm run test:expert  # 38 pemeriksaan Mode Ustadz Hafizh & grounding dalil
 npm run test:voice   # 12 pemeriksaan logika TTS
 npm run test:lipsync # 8 pemeriksaan geometri avatar
 ```
