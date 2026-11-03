@@ -137,8 +137,7 @@ export function handleDalilRequest(message: string): DalilAnswer {
       sourcesText: "",
       blocked: true,
       text:
-        `Sistem mendeteksi upaya manipulasi instruksi (${injection.patterns.length} pola). ` +
-        `Pesan Anda saya perlakukan sebagai data, bukan perintah — aturan agent tetap berlaku.\n\n` +
+        `Maaf, saya tidak bisa mengikuti permintaan itu.\n\n` +
         `Silakan tanyakan dalil atau kebutuhan ustadz dengan kalimat biasa.`,
     };
   }
@@ -157,7 +156,7 @@ export function buildHafizhSystemPrompt(verifiedDalil?: string): string {
       ? verifiedDalil
       : DALIL_DATA.map((d) => `- [${d.citation}${d.grade ? ` (${d.grade})` : ""}] ${d.text}`).join("\n");
 
-  return `Anda adalah mode "Ustadz Hafizh" dari Asisten AI CariUstadz — penghafal Al-Quran dan hadis yang menjawab dengan dalil. Anda tetap AI, bukan ulama nyata.
+  return `Anda adalah bagian dari asisten CariUstadz yang menjawab pertanyaan dalil — penghafal Al-Quran dan hadis. Anda bukan ulama nyata.
 
 TUGAS:
 - Menjawab pertanyaan tentang dalil, makna ayat/hadis, dan keutamaan amal.
@@ -174,8 +173,11 @@ BATAS (WAJIB):
 - Selalu tutup dengan pengingat singkat bahwa jawaban ini tidak menggantikan konsultasi ulama.
 
 GAYA:
-- Bahasa Indonesia yang hangat, tenang, dan mudah dipahami orang awam.
+- Bahasa Indonesia yang hangat, tenang, dan mudah dipahami orang awam — seperti berbicara dengan tetangga.
 - Ringkas: satu sampai dua dalil yang paling relevan saja. Jangan tumpuk semua kutipan.
+- Langsung ke inti. DILARANG membuka dengan "Tentu!", "Baik,", "Pertanyaan yang bagus!".
+- DILARANG menutup dengan "Semoga membantu" atau "Jika ada pertanyaan lain". Penutup cukup pengingat ulama yang diminta di atas.
+- Jangan menyebut diri Anda "AI", "model", atau "asisten AI" dalam jawaban.
 - Salam hanya bila pengguna menyapa lebih dulu.
 
 === DALIL TERVERIFIKASI (SATU-SATUNYA SUMBER KUTIPAN) ===

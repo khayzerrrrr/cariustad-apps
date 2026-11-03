@@ -469,14 +469,14 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
   const ctx: AgentContext = context ?? EMPTY_CONTEXT;
   const msg = normalize(message);
 
-  /* 0. Prompt injection */
+  /* 0. Instruksi manipulatif */
   const injection = detectPromptInjection(message);
   if (injection.isInjection) {
     return {
       text:
-        `Sistem mendeteksi upaya manipulasi instruksi (${injection.patterns.length} pola). ` +
-        `Pesan Anda saya perlakukan sebagai data, bukan perintah — aturan agent tetap berlaku.\n\n` +
-        `Ada yang bisa saya bantu soal ustadz atau kajian?`,
+        `Maaf, saya tidak bisa mengikuti permintaan itu.\n\n` +
+        `Saya hanya bisa membantu soal pencarian dan undangan ustadz, jadwal kajian, atau bertanya dalil.\n\n` +
+        `Ada yang bisa saya bantu?`,
       action: "blocked",
       auditMeta: { injectionPatterns: injection.patterns },
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "injection_blocked" },

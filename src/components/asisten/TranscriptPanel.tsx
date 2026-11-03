@@ -89,13 +89,13 @@ export default function TranscriptPanel({ messages, isThinking }: TranscriptPane
             {msg.role === "assistant" && msg.action === "blocked" && (
               <div className="flex items-center gap-1.5 text-xs text-red-600 mb-1 font-medium">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                Prompt Injection Diblokir
+                Permintaan tidak dapat diproses
               </div>
             )}
             {msg.role === "assistant" && msg.action === "dalil" && (
               <div className="flex items-center gap-1.5 text-xs text-teal-700 mb-1 font-medium">
                 <BookOpen className="w-3.5 h-3.5" />
-                Mode Ustadz Hafizh — Dalil Terverifikasi
+                Dalil — Terverifikasi
               </div>
             )}
             {msg.role === "assistant" && msg.action === "booking_plan" && (

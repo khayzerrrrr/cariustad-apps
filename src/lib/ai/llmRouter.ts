@@ -24,7 +24,7 @@ import {
   FREE_MODEL_CHAIN,
   getCheapModel,
 } from "./openrouterProvider";
-import { looksLikeReasoningLeak } from "./replyQuality";
+import { looksLikeReasoningLeak, cleanSlop } from "./replyQuality";
 
 export type LlmProvider = "deepseek" | "openrouter-free" | "openrouter-cheap";
 
@@ -54,7 +54,7 @@ async function attempt(
   if (looksLikeReasoningLeak(text)) {
     throw new Error(`${model}: jawaban berisi proses berpikir, bukan hasil`);
   }
-  return text;
+  return cleanSlop(text);
 }
 
 /**
@@ -79,12 +79,12 @@ async function tryFreeModels(
 export async function generateReply(req: LlmRequest): Promise<LlmReply> {
   const errors: string[] = [];
 
-  /* 1. DeepSeek langsung — paling murah dan paling cepat saat sehat */
+  /* 1. DeepSeek langsung — opsional sejak 3 Nov 2026; aktif bila kunci diisi */
   if (isDeepSeekConfigured()) {
     try {
       const text = await chatWithDeepSeek(req);
       if (!looksLikeReasoningLeak(text)) {
-        return { text, provider: "deepseek", model: getDeepSeekModel() };
+        return { text: cleanSlop(text), provider: "deepseek", model: getDeepSeekModel() };
       }
       errors.push("deepseek: jawaban berisi proses berpikir");
     } catch (err) {

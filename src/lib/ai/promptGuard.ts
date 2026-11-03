@@ -68,7 +68,7 @@ export function detectPromptInjection(input: string): InjectionCheckResult {
     patterns,
     sanitizedInput,
     warning: isInjection
-      ? `Terdeteksi upaya prompt injection (${patterns.length} pola: ${patterns.join(", ")}). Input diperlakukan sebagai data, aturan agent tetap berlaku.`
+      ? "Permintaan berisi instruksi yang tidak wajar dan tidak diproses."
       : undefined,
   };
 }
