@@ -98,7 +98,9 @@ export async function generateReply(req: LlmRequest): Promise<LlmReply> {
 
     const runCheap = async (): Promise<LlmReply | null> => {
       try {
-        const text = await attempt(cheap, req, 25_000);
+        // 40 dtk: katalog penuh (483 ustadz) butuh waktu lebih lama daripada
+        // prompt hasil penyaringan lokal yang kecil.
+        const text = await attempt(cheap, req, 40_000);
         return { text, provider: "openrouter-cheap", model: cheap };
       } catch (err) {
         errors.push(`${cheap}: ${messageOf(err)}`);
