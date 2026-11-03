@@ -76,7 +76,9 @@ export async function chatWithOpenRouter(
       model: opts.model,
       messages,
       temperature: opts.temperature ?? 0.5,
-      max_tokens: opts.maxTokens ?? 700,
+      // 1100: model reasoning butuh ruang berpikir sebelum menulis isi;
+      // 700 pernah menghasilkan jawaban kosong pada prompt katalog besar.
+      max_tokens: opts.maxTokens ?? 1100,
       stream: false,
     }),
     signal: AbortSignal.timeout(opts.timeoutMs ?? 20_000),
