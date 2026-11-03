@@ -53,11 +53,10 @@ Di bagian **Environment Variables**, tambahkan satu per satu. Nilai diambil dari
 
 | Name | Value | Environment | Wajib? |
 |---|---|---|---|
-| `DEEPSEEK_API_KEY` | *(salin dari `.env.local`)* | Production, Preview, Development | Ya, untuk kualitas jawaban terbaik |
-| `DEEPSEEK_MODEL` | `deepseek-flash` | semua | Ya |
-| `OPENROUTER_API_KEY` | *(salin dari `.env.local`)* | semua | Cadangan — sangat disarankan |
-| `OPENROUTER_CHEAP_MODEL` | `mistralai/mistral-nemo` | semua | Ya |
-| `OPENROUTER_PREFER_FREE` | `false` | semua | Ya |
+| `OPENROUTER_API_KEY` | *(salin dari `.env.local`)* | semua | Ya — penyedia utama sejak 3 Nov 2026 |
+| `OPENROUTER_PREFER_FREE` | `true` | semua | Ya — model gratis dicoba lebih dulu |
+| `OPENROUTER_CHEAP_MODEL` | `openai/gpt-oss-120b` | semua | Ya — cadangan termurah |
+| `DEEPSEEK_API_KEY` | *(hapus — saldo habis)* | — | Tidak; opsional bila nanti di-top-up |
 
 **Jangan** menambahkan `NEXT_PUBLIC_AVATAR_GLB`. Tanpa variabel itu, agent memakai avatar 3D
 prosedural yang lebih rapi. Model GLB uji di `public/models/test-avatar.glb` hanya untuk
@@ -130,7 +129,7 @@ penyedia setelah acara selesai.
 | Build gagal: `React Hook "useX" cannot be called inside a callback` | Sudah diperbaiki di commit terakhir | Pastikan deploy dari branch `main` terbaru |
 | Build gagal: `Module not found: leaflet` | `npm install` tidak jalan | Hapus `node_modules` di Vercel (Settings → General → Clear Build Cache), redeploy |
 | Agent balas "Mesin lokal" terus | Env var tidak terbaca saat build | Redeploy setelah menambah env var |
-| `/api/llm` balas 501 | `DEEPSEEK_API_KEY` kosong | Isi env var, redeploy |
+| `/api/llm` balas 501 | Tidak ada kunci LLM terpasang | Pastikan `OPENROUTER_API_KEY` terisi, redeploy |
 | `/api/llm` balas 422 | Input di luar domain / terdeteksi injeksi | Itu perilaku yang benar — scope guard bekerja |
 | Mikrofon tidak jalan | Halaman bukan HTTPS | Pakai URL `vercel.app`, bukan IP lokal |
 | Peta kosong | Tile OpenStreetMap lambat | Tunggu, atau muat ulang |

@@ -1,0 +1,80 @@
+{
+  "_catatan": "Subset kecil dari dataset nasional src/lib/data.ts (483 profil). Untuk workflow WorkBuddy, cukup sampel representatif. Rating/fee ilustratif, konsisten dengan app.",
+  "ustadz": [
+    {
+      "id": "u-001",
+      "title": "Ustadz",
+      "name": "Ahmad Fauzi Rahman",
+      "credentials": "Alumni LIPIA, M.A. Fiqih",
+      "city": "Bandung",
+      "area": "Bandung Timur",
+      "specializations": ["Fiqih", "Kajian Rutin", "Pernikahan"],
+      "rating": 4.9,
+      "reviewCount": 87,
+      "experience": 12,
+      "fee": 500000,
+      "available": true,
+      "gender": "L"
+    },
+    {
+      "id": "u-002",
+      "title": "Ustadzah",
+      "name": "Fatimah Az-Zahra",
+      "credentials": "Alumni UIN Jakarta, Hafizhah 30 Juz",
+      "city": "Bandung",
+      "area": "Bandung Barat",
+      "specializations": ["Tahsin & Tahfidz", "Kajian Muslimah", "Keluarga"],
+      "rating": 4.8,
+      "reviewCount": 124,
+      "experience": 9,
+      "fee": 400000,
+      "available": true,
+      "gender": "P"
+    },
+    {
+      "id": "u-003",
+      "title": "Ustadz",
+      "name": "Muhammad Rizki Hakim",
+      "credentials": "Alumni Universitas Islam Madinah",
+      "city": "Jakarta Selatan",
+      "area": "Tebet",
+      "specializations": ["Aqidah", "Kajian Rutin", "Remaja"],
+      "rating": 4.7,
+      "reviewCount": 63,
+      "experience": 7,
+      "fee": 350000,
+      "available": true,
+      "gender": "L"
+    },
+    {
+      "id": "u-004",
+      "title": "Ustadzah",
+      "name": "Aisyah Nur Rahmah",
+      "credentials": "Alumni UIN Bandung, M.A. Dakwah",
+      "city": "Bandung",
+      "area": "Bandung Kota",
+      "specializations": ["Fiqih Wanita", "Keluarga", "Kajian Muslimah"],
+      "rating": 4.9,
+      "reviewCount": 156,
+      "experience": 14,
+      "fee": 450000,
+      "available": true,
+      "gender": "P"
+    },
+    {
+      "id": "u-005",
+      "title": "Ustadz",
+      "name": "Abdul Karim Yusuf",
+      "credentials": "Alumni LIPIA, Spesialis Fiqih Ibadah",
+      "city": "Surabaya",
+      "area": "Gubeng",
+      "specializations": ["Fiqih", "Muamalah", "Kajian Rutin"],
+      "rating": 4.6,
+      "reviewCount": 41,
+      "experience": 10,
+      "fee": 300000,
+      "available": true,
+      "gender": "L"
+    }
+  ]
+}

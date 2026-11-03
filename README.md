@@ -153,10 +153,11 @@ meningkatkan kualitas bahasa jawaban naratif.
 
 | Variabel | Wajib | Keterangan |
 |---|---|---|
-| `DEEPSEEK_API_KEY` | tidak | Penyedia utama |
+| `OPENROUTER_API_KEY` | tidak | Penyedia utama (gratis dulu, termurah sebagai cadangan) |
+| `OPENROUTER_PREFER_FREE` | tidak | `true` = coba model `:free` lebih dulu |
+| `OPENROUTER_CHEAP_MODEL` | tidak | Default `openai/gpt-oss-120b` |
+| `DEEPSEEK_API_KEY` | tidak | Opsional sejak 3 Nov 2026 — bila diisi, otomatis mendahului OpenRouter |
 | `DEEPSEEK_MODEL` | tidak | Default `deepseek-flash` |
-| `OPENROUTER_API_KEY` | tidak | Cadangan otomatis |
-| `OPENROUTER_CHEAP_MODEL` | tidak | Default `mistralai/mistral-nemo` |
 | `NEXT_PUBLIC_AVATAR_GLB` | tidak | Path model GLB; kosong = avatar prosedural |
 
 > Kunci API **tidak pernah** dikirim ke browser. Semua panggilan LLM lewat route server

@@ -1,0 +1,32 @@
+{
+  "_catatan": "Sumber kutipan dalil SATU-SATUNYA yang boleh dipakai agen (mirror dari dalil-db/dalil.json di repo utama — subset). Validasi: sunnah.com, quran.com, tanzil.net.",
+  "dalil": [
+    {
+      "id": "d-001",
+      "topik": "sabar",
+      "sumber": "QS Al-Baqarah: 153",
+      "teks": "Yaa ayyuhal ladziina aamanustafiinuu bishshabri washshalaah, innallaaha ma'ashshaabiriin.",
+      "terjemah": "Wahai orang-orang yang beriman, mohonlah pertolongan (kepada Allah) dengan sabar dan salat. Sesungguhnya Allah beserta orang-orang yang sabar.",
+      "derajat": "Ayat Al-Quran",
+      "verifikasi": "https://quran.com/2/153"
+    },
+    {
+      "id": "d-002",
+      "topik": "sedekah",
+      "sumber": "HR. Bukhari no. 1442",
+      "teks": "Maa naqhashat shadaqatun min maal.",
+      "terjemah": "Sedekah tidak mengurangi harta.",
+      "derajat": "Shahih — Bukhari & Muslim",
+      "verifikasi": "https://sunnah.com/bukhari:1442"
+    },
+    {
+      "id": "d-003",
+      "topik": "ilmu",
+      "sumber": "HR. Ibnu Majah no. 224",
+      "teks": "Man salaka thariiqan yaltamisu fiihi 'ilman sahhalallaahu lahu thariiqan ilal jannah.",
+      "terjemah": "Siapa yang menempuh jalan untuk mencari ilmu, Allah akan mudahkan baginya jalan menuju surga.",
+      "derajat": "Shahih (dishahihkan Al-Albani)",
+      "verifikasi": "https://sunnah.com/ibnmajah:224"
+    }
+  ]
+}

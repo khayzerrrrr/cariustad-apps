@@ -1,5 +1,6 @@
 /**
- * Adapter OpenRouter — KHUSUS SERVER (cadangan bila saldo DeepSeek habis).
+ * Adapter OpenRouter — KHUSUS SERVER (satu-satunya penyedia sejak 3 Nov 2026;
+ * kunci DeepSeek dihapus karena saldo habis).
  *
  * Strategi dua lapis:
  *  1. Model gratis lebih dulu (`:free`) — tanpa biaya, tapi sering kena
@@ -28,8 +29,10 @@ export interface OpenRouterOptions {
 const BASE_URL = "https://openrouter.ai/api/v1";
 
 /**
- * Urutan percobaan model gratis. Diurutkan dari yang paling stabil saat diuji
- * (31 Okt 2026): nemotron merespons normal, sebagian lain kena 429.
+ * Urutan percobaan model gratis. Diurutkan dari yang paling stabil saat
+ * diuji live (3 Nov 2026): nemotron-3-ultra menjawab 1,1 detik; gemma dan
+ * sebagian besar model lain kena 429 saat perekaman jam sibuk — tetap
+ * disimpan sebagai cadangan karena bisa pulih di luar jam sibuk.
  */
 export const FREE_MODEL_CHAIN = [
   "nvidia/nemotron-3-ultra-550b-a55b:free",
@@ -38,7 +41,7 @@ export const FREE_MODEL_CHAIN = [
 ];
 
 export function getCheapModel(): string {
-  return process.env.OPENROUTER_CHEAP_MODEL || "mistralai/mistral-nemo";
+  return process.env.OPENROUTER_CHEAP_MODEL || "openai/gpt-oss-120b";
 }
 
 export function isOpenRouterConfigured(): boolean {

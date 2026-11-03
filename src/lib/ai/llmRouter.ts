@@ -1,16 +1,16 @@
 /**
  * Rantai penyedia LLM — KHUSUS SERVER.
  *
- * Urutan bawaan:
- *   DeepSeek → OpenRouter termurah → OpenRouter gratis.
+ * Urutan sejak 3 Nov 2026 (kunci DeepSeek dihapus, saldo habis):
+ *   OpenRouter gratis → OpenRouter termurah.
  *
- * Kenapa yang berbayar murah didahulukan daripada yang gratis? Saat diuji,
- * permintaan gratis yang dikirim bersamaan memicu pembatasan laju OpenRouter
- * dan ikut menahan permintaan berikutnya (respons > 20 detik). Model termurah
- * hanya sekitar $0,03 per juta token — untuk demo, keandalan lebih penting
- * daripada mengejar nol biaya.
+ * Kenapa gratis didahulukan? Permintaan pengguna demo mayoritas pendek dan
+ * tidak kritis latensi; model gratis diuji live menjawab ~1 detik di luar
+ * jam sibuk. Model termurah (gpt-oss-120b, ~$0,03 per juta token) hanya
+ * dipanggil bila semua model gratis kena batas laju.
  *
- * Set OPENROUTER_PREFER_FREE=true bila ingin mencoba yang gratis lebih dulu.
+ * DeepSeek masih didukung kode: bila DEEPSEEK_API_KEY diisi kembali,
+ * ia otomatis mendahului OpenRouter.
  */
 
 import {
@@ -134,14 +134,17 @@ export async function generateReply(req: LlmRequest): Promise<LlmReply> {
 
 /** Ringkasan status untuk ditampilkan di UI. */
 export function getProviderStatus() {
+  const preferFree = process.env.OPENROUTER_PREFER_FREE === "true";
   return {
     configured: isDeepSeekConfigured() || isOpenRouterConfigured(),
     primary: isDeepSeekConfigured()
       ? { provider: "deepseek" as const, model: getDeepSeekModel() }
       : isOpenRouterConfigured()
-      ? { provider: "openrouter-cheap" as const, model: getCheapModel() }
+      ? preferFree
+        ? ({ provider: "openrouter-free" as const, model: FREE_MODEL_CHAIN[0] } as const)
+        : { provider: "openrouter-cheap" as const, model: getCheapModel() }
       : null,
-    // Cadangan pertama yang benar-benar dipakai setelah DeepSeek gagal.
+    // Cadangan: model termurah bila semua model gratis kena batas laju.
     backup: isOpenRouterConfigured()
       ? { provider: "openrouter-cheap" as const, model: getCheapModel() }
       : null,
