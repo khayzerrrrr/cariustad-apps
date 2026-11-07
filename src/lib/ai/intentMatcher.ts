@@ -285,6 +285,15 @@ function bookingLinkLine(u: { id: string; title: string; name: string }): string
   return `[Undang ${u.title} ${u.name} langsung →](/booking?ustadz=${u.id})`;
 }
 
+/** Blok tautan undang untuk beberapa ustadz sekaligus. */
+function bookingLinksBlock(list: { id: string; title: string; name: string }[]): string {
+  if (list.length === 0) return "";
+  return (
+    `\n\nUndang langsung dari halaman jadwalnya:\n` +
+    list.map((u) => `- ${bookingLinkLine(u)}`).join("\n")
+  );
+}
+
 /* ---------------------- penyaring lanjutan ---------------------- */
 
 function refinePrevious(message: string, ctx: AgentContext): IntentResult | null {
@@ -334,7 +343,7 @@ function refinePrevious(message: string, ctx: AgentContext): IntentResult | null
   return {
     text:
       formatList(top, `Baik, hasil sebelumnya saya ${label}:`) +
-      (top[0] ? `\n\n${bookingLinkLine(top[0])}` : "") +
+      bookingLinksBlock(top) +
       `\n\nMau saya lanjutkan ke undangan untuk salah satu dari mereka?`,
     action: "search",
     data: { list: top, text: "" },
@@ -414,17 +423,43 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
     searchResult = { ...searchResult, list: sorted };
   }
 
-  const picked = searchResult?.list?.[0] ?? searchResult?.ustadz;
+  /* Rekomendasi booking: kota yang disebut pengguna WAJIB diutamakan —
+     jangan menawarkan ustadz kota lain sebagai pilihan utama. Tampilkan
+     beberapa pilihan tersedia, masing-masing dengan tautan undangnya. */
+  const rawList =
+    searchResult?.list ?? (searchResult?.ustadz ? [searchResult.ustadz] : []);
+  const ranked = [...rawList].sort((a, b) => {
+    if (parsed.city) {
+      const ac = Number(a.city === parsed.city);
+      const bc = Number(b.city === parsed.city);
+      if (ac !== bc) return bc - ac;
+    }
+    return b.rating - a.rating;
+  });
+  const topPicks = ranked.slice(0, 3);
+  const picked = topPicks[0];
   const ustadzName = picked ? `${picked.title} ${picked.name}` : undefined;
 
-  /* Jawaban booking kini GENERAL: siapa (ustadz/ustadzah) & di daerah mana,
-     lalu arahkan ke hyperlink halaman booking untuk cek jadwal. */
   let text: string;
   if (picked) {
+    const exactCityCount = parsed.city
+      ? topPicks.filter((u) => u.city === parsed.city).length
+      : topPicks.length;
+    const intro = parsed.city
+      ? exactCityCount > 0
+        ? `Untuk ${parsed.eventType?.toLowerCase() ?? "acara Anda"} di ${parsed.city}, ini ${topPicks.length} pilihan teratas yang tersedia:`
+        : `Untuk ${parsed.eventType?.toLowerCase() ?? "acara"} di ${parsed.city}, belum ada ustadz yang berbasis di sana — ini ${topPicks.length} yang paling dekat dan tersedia:`
+      : `Berikut ${topPicks.length} pilihan teratas yang tersedia:`;
+
+    const optionLines = topPicks.map(
+      (u, i) =>
+        `${i + 1}. ${u.title} ${u.name} — ${u.specializations[0] ?? "kajian"} · ${u.city} · rating ${u.rating}/5 · ${formatRupiah(u.fee)}\n` +
+        `   ${bookingLinkLine(u)}`
+    );
+
     text =
-      `Untuk ${parsed.city ?? picked.city}, saya rekomendasikan ` +
-      `${picked.title} ${picked.name} — ${picked.specializations[0] ?? "kajian"}, rating ${picked.rating}/5, ` +
-      `${picked.experience} tahun pengalaman, berbasis di ${picked.city}, ${picked.province}.`;
+      `${intro}\n\n${optionLines.join("\n\n")}` +
+      `\n\nCek jadwal lewat tautannya, atau balas "setuju" untuk melanjutkan dengan pilihan teratas (${ustadzName}).`;
     if (needsUstadzah && !isUstadzah(picked)) {
       text += `\nCatatan: Anda menyebut audience muslimah — saya bisa carikan ustadzah bila lebih sesuai.`;
     }
@@ -433,13 +468,10 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
       (parsed.genderPreference === "ustadzah") !== isUstadzah(picked);
     if (mismatch) {
       text +=
-        `\nCatatan jujur: di ${picked.city} belum ada ${
+        `\nCatatan jujur: di ${parsed.city ?? picked.city} belum ada ${
           parsed.genderPreference === "ustadz" ? "ustadz pria" : "ustadzah"
         } di database kami. Saya tawarkan yang tersedia; bila preferensi ini penting, saya bisa carikan di kota terdekat.`;
     }
-    text +=
-      `\n\nJadwal & ketersediaan bisa dicek langsung di halaman Undang Ustadz:\n` +
-      `[Cek Jadwal & Undang ${picked.title} ${picked.name} →](/booking?ustadz=${picked.id})`;
   } else {
     text = formatBookingPlan(parsed, ustadzName);
   }
@@ -736,7 +768,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
     return {
       text:
         formatList(top, `Berikut ${top.length} ustadz yang paling sesuai:`) +
-        (top[0] ? `\n\n${bookingLinkLine(top[0])}` : "") +
+        bookingLinksBlock(top) +
         `\n\n${notes.join(" ")}\n\nMau saya susun rencana undangan untuk salah satu dari mereka?`,
       action: "recommend",
       data: { list: top, text: "" },
@@ -915,7 +947,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
               : `Saya menemukan ${list.length} ustadz yang sesuai:`
           ) +
           priceLine +
-          (top[0] ? `\n\n${bookingLinkLine(top[0])}` : "") +
+          bookingLinksBlock(top) +
           `\n\nMau saya buatkan rencana undangan untuk salah satu dari mereka?`,
         action: "search",
         data: { list: top, text: "" },
