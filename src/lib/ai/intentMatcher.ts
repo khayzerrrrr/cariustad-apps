@@ -361,22 +361,70 @@ function refinePrevious(message: string, ctx: AgentContext): IntentResult | null
 function processBookingRequest(message: string, ctx: AgentContext): IntentResult {
   const parsed = parseBookingRequest(message);
 
-  const missingCritical = parsed.missingFields.filter(
-    (f) => f === "hari/tanggal" || f === "waktu"
-  );
-  if (parsed.completeness === "minimal" || missingCritical.length > 0) {
+  /* Klarifikasi bertahap: gabungkan dengan draf sebelumnya, jadi pengguna
+     tidak perlu menyebut semuanya dalam satu kalimat — cukup menjawab
+     satu pertanyaan dalam satu giliran. */
+  const prev = ctx.pendingBooking;
+  if (prev) {
+    parsed.eventType = parsed.eventType ?? prev.eventType;
+    parsed.city = parsed.city ?? prev.city;
+    parsed.day = parsed.day ?? prev.day;
+    parsed.startTime = parsed.startTime ?? prev.startTime;
+    parsed.endTime = parsed.endTime ?? prev.endTime;
+    parsed.audienceSize = parsed.audienceSize ?? prev.audienceSize;
+    parsed.specialization = parsed.specialization ?? prev.specialization;
+  }
+
+  /* Tanya SATU hal yang paling penting dulu — seperti percakapan manusia.
+     Urutan: kota → hari & jam. Jenis acara tidak memblokir — cukup
+     ditanyakan santai setelah rencana jadi, atau dibiarkan umum.
+     Bila pertanyaan yang sama pernah diajukan dan tetap tak terjawab,
+     jangan memaksa: lanjutkan dengan yang ada. */
+  const needCity = !parsed.city;
+  const needTime = !parsed.day || !parsed.startTime;
+  const queue = [
+    needCity
+      ? {
+          field: "city",
+          ask:
+            `Siap. Sebelum saya carikan — acaranya di kota apa? ` +
+            `Kalau belum pasti, sebutkan saja area sekitarnya.`,
+        }
+      : null,
+    needTime
+      ? {
+          field: "time",
+          ask:
+            `Kapan rencananya? Sebutkan hari dan jamnya — misalnya "Sabtu jam 20:00". ` +
+            `Itu perlu saya cek juga terhadap aturan waktu, misalnya Salat Jumat.`,
+        }
+      : null,
+  ].filter(Boolean) as Array<{ field: string; ask: string }>;
+
+  const askedBefore = ctx.pendingClarify;
+  const dodged = askedBefore ? queue.some((q) => q.field === askedBefore) : false;
+  const toAsk = queue.find((q) => q.field !== askedBefore);
+
+  if (toAsk && !dodged) {
     return {
-      text:
-        `Saya butuh beberapa informasi tambahan sebelum bisa menyusun rencana undangan.\n\n` +
-        `Yang belum jelas: ${parsed.missingFields.join(", ")}\n\n` +
-        `Mohon lengkapi:\n• Jenis acara (kajian, ceramah, pengajian, dll.)\n• Hari/tanggal\n• Waktu\n• Lokasi (kota atau nama masjid)\n\n` +
-        `Contoh: "Booking ustadz untuk kajian fiqih di Jakarta, Senin jam 19:00, 50 orang" atau "Undang ustadz untuk ceramah, Rabu jam 20:00"`,
+      text: toAsk.ask,
       action: "clarify",
       parsedBooking: parsed,
-      context: { ...ctx, turn: ctx.turn + 1, lastAction: "clarify" },
+      context: {
+        ...ctx,
+        turn: ctx.turn + 1,
+        lastAction: "clarify",
+        pendingBooking: parsed,
+        pendingClarify: toAsk.field,
+      },
     };
   }
 
+  /* Lanjut dengan yang ada — tandai kekurangannya supaya rencana
+     menyebutkannya dengan jujur. */
+  if (queue.length > 0) {
+    parsed.missingFields = queue.map((q) => q.field);
+  }
   const cultural = checkCulturalRules({
     day: parsed.day,
     startTime: parsed.startTime,
@@ -519,6 +567,24 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
       auditMeta: { injectionPatterns: injection.patterns },
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "injection_blocked" },
     };
+  }
+
+  /* 0b. Lanjutan klarifikasi booking — jawaban pendek seperti "di Bandung"
+     atau "Sabtu jam 20:00" tidak mengandung kata booking, tetapi harus
+     tetap masuk alur booking yang sedang berjalan. */
+  if (ctx.lastAction === "clarify" && ctx.pendingBooking) {
+    const fresh = parseBookingRequest(message);
+    const hasNew = Boolean(
+      fresh.city ||
+        fresh.day ||
+        fresh.startTime ||
+        fresh.eventType ||
+        fresh.specialization ||
+        (fresh.audienceSize && fresh.audienceSize !== ctx.pendingBooking.audienceSize)
+    );
+    if (hasNew) {
+      return processBookingRequest(message, ctx);
+    }
   }
 
   /* 1. Batas domain, jangan menjawab di luar konteks */

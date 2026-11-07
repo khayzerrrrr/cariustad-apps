@@ -24,6 +24,8 @@ export interface AgentContext {
   /** Ustadz yang diusulkan pada draf booking */
   pendingUstadzId?: string;
   pendingUstadzName?: string;
+  /** Field yang sedang ditanyakan pada klarifikasi bertahap */
+  pendingClarify?: string;
   /** true = agent sedang menunggu kata "setuju" / "batal" */
   awaitingConfirmation?: boolean;
 }
