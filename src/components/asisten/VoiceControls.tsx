@@ -27,7 +27,7 @@ export default function VoiceControls({
       <button
         onClick={onToggleListen}
         disabled={!voiceSupported}
-        className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${
+        className={`relative flex items-center justify-center w-12 h-12 rounded-full transition duration-300 ${
           isListening
             ? "bg-red-500 text-white shadow-lg shadow-red-500/30 scale-110"
             : voiceSupported
@@ -49,7 +49,7 @@ export default function VoiceControls({
       {/* Speaker toggle */}
       <button
         onClick={onToggleMute}
-        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+        className={`flex items-center justify-center w-10 h-10 rounded-full transition ${
           isMuted
             ? "bg-gray-200 text-gray-500 hover:bg-gray-300"
             : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
@@ -62,7 +62,7 @@ export default function VoiceControls({
       {/* Reset */}
       <button
         onClick={onReset}
-        className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+        className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
         title="Reset percakapan"
       >
         <RotateCcw className="w-4 h-4" />

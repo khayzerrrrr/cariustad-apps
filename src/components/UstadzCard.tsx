@@ -17,7 +17,7 @@ export default function UstadzCard({
   return (
     <Link
       href={`/ustadz/${ustadz.id}`}
-      className="group flex flex-col rounded-2xl border border-sand-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-lg hover:shadow-primary-500/10"
+      className="group flex flex-col rounded-2xl border border-sand-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-lg hover:shadow-primary-500/10"
     >
       <div className="flex items-start gap-4">
         <Avatar
@@ -35,7 +35,7 @@ export default function UstadzCard({
               <BadgeCheck className="h-4 w-4 shrink-0 text-primary-500" />
             )}
           </div>
-          <p className="text-xs text-slate-400">{ustadz.credentials}</p>
+          <p className="text-xs text-slate-500">{ustadz.credentials}</p>
           <div className="mt-1.5 flex items-center gap-1 text-sm text-slate-500">
             <MapPin className="h-3.5 w-3.5 text-primary-400" />
             <span className="truncate">
@@ -72,14 +72,14 @@ export default function UstadzCard({
         />
         <span className="text-sm font-semibold text-slate-700">
           {formatRupiah(ustadz.fee)}
-          <span className="text-xs font-normal text-slate-400"> /acara</span>
+          <span className="text-xs font-normal text-slate-500"> /acara</span>
         </span>
       </div>
 
       <div className="mt-3 flex items-center justify-between">
         <span
           className={`inline-flex items-center gap-1.5 text-xs font-medium ${
-            ustadz.available ? "text-primary-600" : "text-slate-400"
+            ustadz.available ? "text-primary-600" : "text-slate-500"
           }`}
         >
           <Clock className="h-3.5 w-3.5" />

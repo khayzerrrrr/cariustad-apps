@@ -100,6 +100,32 @@ body {
   100% { transform: translate(-50%, -50%) scale(1.22); opacity: 0; }
 }
 
+/* ===== Awwwards hard stops ===== */
+
+/* Descender safety: teks display >48px tidak boleh terpotong (overflow: clip
+   mengabaikan padding-bottom, jadi selalu overflow: visible) */
+.display-safe {
+  overflow: visible;
+  padding-bottom: 0.18em;
+}
+
+/* Kontras: seluruh teks body >= 4.5:1 — slate-400 dilarang untuk teks */
+
+/* Hormati preferensi reduced motion — animasi Framer Motion dinonaktifkan
+   lewat useReducedMotion; keyframe CSS ikut dimatikan di sini */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .avatar-motion-safe { animation: none !important; }
 }

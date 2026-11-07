@@ -29,6 +29,7 @@ import { checkBooking } from "@/lib/bookingGuard";
 import Avatar from "@/components/Avatar";
 import LocationPicker from "@/components/LocationPicker";
 import VerificationModal from "@/components/booking/VerificationModal";
+import Reveal from "@/components/motion/Reveal";
 
 export default function BookingClient({
   initialUstadz,
@@ -145,7 +146,7 @@ export default function BookingClient({
     <div className="bg-sand-50">
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center">
+        <Reveal className="text-center" y={18}>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
             <CalendarCheck className="h-3.5 w-3.5" />
             Undang Ustadz
@@ -158,7 +159,7 @@ export default function BookingClient({
             detail undangan. Setiap undangan melewati pemeriksaan anti-spam
             untuk melindungi jadwal ustadz.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Form */}
@@ -215,7 +216,7 @@ export default function BookingClient({
                   <div className="truncate font-semibold text-slate-800">
                     {selectedUstadz.title} {selectedUstadz.name}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-500">
                     {selectedUstadz.specializations.join(", ")} •{" "}
                     {formatRupiah(selectedUstadz.fee)}/acara
                   </div>
@@ -260,7 +261,7 @@ export default function BookingClient({
                   Slot Waktu Tersedia
                 </label>
                 {availableSlots.length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-slate-500">
                     Maaf, tidak ada slot tersedia untuk hari {day}.
                   </p>
                 ) : (
@@ -401,7 +402,7 @@ export default function BookingClient({
             {bookings.length === 0 ? (
               <div className="mt-4 rounded-xl border border-dashed border-sand-200 py-8 text-center">
                 <CalendarCheck className="mx-auto h-8 w-8 text-sand-300" />
-                <p className="mt-2 text-sm text-slate-400">
+                <p className="mt-2 text-sm text-slate-500">
                   Belum ada undangan. Mulai undang ustadz!
                 </p>
               </div>

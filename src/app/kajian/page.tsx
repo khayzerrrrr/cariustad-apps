@@ -13,6 +13,7 @@ import {
 import { kajianData, ustadzData } from "@/lib/data";
 import { ALL_EVENT_TYPES, ALL_CITIES } from "@/lib/types";
 import { formatRupiah } from "@/lib/storage";
+import StaggerShaf from "@/components/motion/StaggerShaf";
 
 const DAYS_ID = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 const MONTHS_ID = [
@@ -132,14 +133,14 @@ export default function KajianPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <StaggerShaf className="grid grid-cols-1 gap-5 md:grid-cols-2">
             {filtered.map((k) => {
               const ustadz = ustadzData.find((u) => u.id === k.ustadzId);
               const fd = formatDate(k.date);
               return (
                 <div
                   key={k.id}
-                  className="flex gap-4 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm transition-all hover:border-primary-200 hover:shadow-lg hover:shadow-primary-500/10"
+                  className="flex gap-4 rounded-2xl border border-sand-200 bg-white p-5 shadow-sm transition hover:border-primary-200 hover:shadow-lg hover:shadow-primary-500/10"
                 >
                   {/* Date block */}
                   <div className="flex shrink-0 flex-col items-center justify-center rounded-xl bg-primary-50 px-3 py-2 text-primary-700">
@@ -208,7 +209,7 @@ export default function KajianPage() {
                 </div>
               );
             })}
-          </div>
+          </StaggerShaf>
         )}
       </div>
     </div>

@@ -83,7 +83,7 @@ export default function HadithPage() {
               <p className="mt-3 text-sm leading-relaxed text-slate-600">
                 &ldquo;{h.translation}&rdquo;
               </p>
-              <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+              <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
                 <span>{h.narrator}</span>
                 <span>•</span>
                 <span className="rounded-full bg-sand-100 px-2 py-0.5 font-medium text-slate-500">

@@ -18,12 +18,12 @@ export default function HeroSearch() {
       onSubmit={submit}
       className="flex w-full items-center gap-2 rounded-2xl bg-white p-2 shadow-xl shadow-emerald-950/20"
     >
-      <Search className="ml-2 h-5 w-5 shrink-0 text-slate-400" />
+      <Search className="ml-2 h-5 w-5 shrink-0 text-slate-500" />
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Cari nama ustadz atau spesialisasi..."
-        className="min-w-0 flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none sm:text-base"
+        className="min-w-0 flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-500 focus:outline-none sm:text-base"
       />
       <button
         type="submit"

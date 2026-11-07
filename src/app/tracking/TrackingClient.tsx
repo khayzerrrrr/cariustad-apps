@@ -349,11 +349,11 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
               </div>
               <div className="mt-2 h-3 overflow-hidden rounded-full bg-sand-100">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 transition duration-500"
                   style={{ width: `${progress * 100}%` }}
                 />
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                 <span>Lokasi asal ustadz</span>
                 <span>{destLabel.split(",")[0]}</span>
               </div>
@@ -373,7 +373,7 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
 
               {/* Last update time */}
               {lastUpdate && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
                   <MapPin className="h-3 w-3" />
                   Lokasi terakhir diperbarui:{" "}
                   <span className="font-medium text-slate-500">
@@ -396,32 +396,32 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
               </h3>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-slate-400">Ustadz</dt>
+                  <dt className="text-slate-500">Ustadz</dt>
                   <dd className="font-medium text-slate-700">
                     {ustadz.title} {ustadz.name}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-400">Hari</dt>
+                  <dt className="text-slate-500">Hari</dt>
                   <dd className="font-medium text-slate-700">{booking.day}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-400">Waktu</dt>
+                  <dt className="text-slate-500">Waktu</dt>
                   <dd className="font-medium text-slate-700">{booking.time}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-400">Acara</dt>
+                  <dt className="text-slate-500">Acara</dt>
                   <dd className="font-medium text-slate-700">{booking.eventName}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="shrink-0 text-slate-400">Lokasi</dt>
+                  <dt className="shrink-0 text-slate-500">Lokasi</dt>
                   <dd className="text-right font-medium text-slate-700">
                     {destLabel}
                   </dd>
                 </div>
                 {booking.eventLocation && (
                   <div className="flex justify-between gap-2">
-                    <dt className="shrink-0 text-slate-400">Koordinat</dt>
+                    <dt className="shrink-0 text-slate-500">Koordinat</dt>
                     <dd className="text-right text-xs font-medium text-slate-500">
                       {booking.eventLocation.lat.toFixed(4)},{" "}
                       {booking.eventLocation.lng.toFixed(4)}
@@ -446,24 +446,24 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
               </h3>
               <div className="mt-3 space-y-3">
                 <div className="rounded-xl bg-sand-50 p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <MapPin className="h-3.5 w-3.5" /> Jarak tersisa
                   </div>
                   <div className="font-display text-2xl font-bold text-slate-800">
                     {progress >= 1 ? "0 m" : formatDistance(distanceRemaining)}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-500">
                     dari total {formatDistance(route.total)}
                   </div>
                 </div>
                 <div className="rounded-xl bg-sand-50 p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <Clock className="h-3.5 w-3.5" /> Estimasi tiba
                   </div>
                   <div className="font-display text-2xl font-bold text-slate-800">
                     {progress >= 1 ? "Tiba" : `~${etaMin} menit`}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-500">
                     {progress >= 1
                       ? "Ustadz sudah di lokasi"
                       : `estimasi ${Math.round(route.tripMinutes)} menit total`}
@@ -534,7 +534,7 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
                         <span className="font-medium text-slate-600">
                           {p.time}
                         </span>
-                        <span className="text-slate-400">
+                        <span className="text-slate-500">
                           {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
                         </span>
                       </div>
@@ -543,7 +543,7 @@ export default function TrackingClient({ bookingId }: { bookingId: string }) {
               </div>
             )}
 
-            <p className="text-center text-xs text-slate-400">
+            <p className="text-center text-xs text-slate-500">
               {demoMode
                 ? "* Mode demo: update setiap 20 detik untuk presentasi."
                 : "* Mode real: update lokasi setiap 5 menit."}

@@ -129,7 +129,7 @@ export default function SholatPage() {
         </div>
 
         {loading && (
-          <div className="mt-8 flex items-center justify-center py-12 text-slate-400">
+          <div className="mt-8 flex items-center justify-center py-12 text-slate-500">
             <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
             <span className="ml-2 text-sm">Memuat jadwal...</span>
           </div>
@@ -146,13 +146,13 @@ export default function SholatPage() {
             {/* Date */}
             <div className="mt-6 flex items-center justify-between rounded-xl border border-sand-200 bg-white p-4">
               <div>
-                <div className="text-xs text-slate-400">Tanggal Hijriah</div>
+                <div className="text-xs text-slate-500">Tanggal Hijriah</div>
                 <div className="font-semibold text-slate-700">
                   {data.date.hijri.day} {data.date.hijri.month.en} {data.date.hijri.year} H
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-slate-400">Masehi</div>
+                <div className="text-xs text-slate-500">Masehi</div>
                 <div className="font-semibold text-slate-700">
                   {data.date.readable}
                 </div>
@@ -168,7 +168,7 @@ export default function SholatPage() {
                 return (
                   <div
                     key={p.key}
-                    className={`rounded-xl border p-4 text-center transition-all ${
+                    className={`rounded-xl border p-4 text-center transition ${
                       isNext
                         ? "border-primary-400 bg-primary-50 shadow-md shadow-primary-500/10 ring-2 ring-primary-400"
                         : "border-sand-200 bg-white"
@@ -193,7 +193,7 @@ export default function SholatPage() {
               })}
             </div>
 
-            <p className="mt-4 text-center text-xs text-slate-400">
+            <p className="mt-4 text-center text-xs text-slate-500">
               Sumber: Aladhan API • Metode Kemenag RI (20) • Kota: {API_CITIES[city]}
             </p>
           </>

@@ -101,7 +101,7 @@ export default function Navbar() {
                         >
                           {f.label}
                         </span>
-                        <span className="block text-xs text-slate-400">
+                        <span className="block text-xs text-slate-500">
                           {f.desc}
                         </span>
                       </span>
@@ -129,13 +129,13 @@ export default function Navbar() {
         <div className="hidden lg:flex items-center gap-2">
           <Link
             href="/ustadz"
-            className="inline-flex items-center rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-all hover:bg-emerald-50"
+            className="inline-flex items-center rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
           >
             Cari Ustadz
           </Link>
           <Link
             href="/asisten"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary-600/30 transition-all hover:bg-primary-700 hover:shadow-md"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary-600/30 transition hover:bg-primary-700 hover:shadow-md"
           >
             <Bot className="h-4 w-4" />
             Asisten AI
@@ -174,7 +174,7 @@ export default function Navbar() {
             ))}
 
             {/* Features label */}
-            <li className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <li className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
               Fitur Islami
             </li>
             {featureLinks.map((f) => (

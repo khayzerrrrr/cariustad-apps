@@ -30,7 +30,7 @@ export default function HadithWidget() {
         &ldquo;{hadith.translation}&rdquo;
       </p>
       <div className="mt-3 flex items-center justify-between">
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-500">
           <span className="font-semibold text-slate-600">{hadith.source}</span>
           <br />
           {hadith.narrator}

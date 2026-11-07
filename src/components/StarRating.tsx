@@ -40,7 +40,7 @@ export default function StarRating({
         </span>
       )}
       {reviewCount !== undefined && (
-        <span className="text-xs text-slate-400">({reviewCount})</span>
+        <span className="text-xs text-slate-500">({reviewCount})</span>
       )}
     </div>
   );

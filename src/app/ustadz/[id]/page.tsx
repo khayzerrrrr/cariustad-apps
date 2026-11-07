@@ -20,6 +20,7 @@ import { formatRupiah } from "@/lib/storage";
 import Avatar from "@/components/Avatar";
 import StarRating from "@/components/StarRating";
 import ReviewSection from "./ReviewSection";
+import Reveal from "@/components/motion/Reveal";
 
 export function generateStaticParams() {
   return ustadzData.map((u) => ({ id: u.id }));
@@ -56,7 +57,8 @@ export default function UstadzDetailPage({
         </Link>
 
         {/* Header card */}
-        <div className="mt-4 overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-sm">
+        <Reveal className="mt-4" y={20}>
+        <div className="overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-sm">
           <div className="relative h-28 bg-gradient-to-r from-primary-600 to-teal-700 sm:h-32">
             <div className="islamic-pattern absolute inset-0 opacity-[0.12]" />
           </div>
@@ -112,7 +114,7 @@ export default function UstadzDetailPage({
                   <span className="font-semibold text-slate-700">
                     {ustadz.rating.toFixed(1)}
                   </span>
-                  <span className="text-slate-400">
+                  <span className="text-slate-500">
                     ({ustadz.reviewCount} ulasan)
                   </span>
                 </span>
@@ -133,7 +135,7 @@ export default function UstadzDetailPage({
                 className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
                   ustadz.available
                     ? "bg-green-50 text-green-600"
-                    : "bg-sand-100 text-slate-400"
+                    : "bg-sand-100 text-slate-500"
                 }`}
               >
                 <Clock className="h-3 w-3" />
@@ -144,7 +146,7 @@ export default function UstadzDetailPage({
             {/* Quick stats */}
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-xl bg-sand-50 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
                   <GraduationCap className="h-3.5 w-3.5" /> Pengalaman
                 </div>
                 <div className="mt-1 font-semibold text-slate-700">
@@ -152,7 +154,7 @@ export default function UstadzDetailPage({
                 </div>
               </div>
               <div className="rounded-xl bg-sand-50 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
                   <Wallet className="h-3.5 w-3.5" /> Honor
                 </div>
                 <div className="mt-1 font-semibold text-slate-700">
@@ -160,7 +162,7 @@ export default function UstadzDetailPage({
                 </div>
               </div>
               <div className="rounded-xl bg-sand-50 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
                   <Briefcase className="h-3.5 w-3.5" /> Bidang
                 </div>
                 <div className="mt-1 font-semibold text-slate-700">
@@ -168,7 +170,7 @@ export default function UstadzDetailPage({
                 </div>
               </div>
               <div className="rounded-xl bg-sand-50 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
                   <MapPin className="h-3.5 w-3.5" /> Lokasi
                 </div>
                 <div className="mt-1 truncate font-semibold text-slate-700">
@@ -182,7 +184,7 @@ export default function UstadzDetailPage({
               <div className="flex items-center gap-3 rounded-xl border border-sand-200 p-3">
                 <GraduationCap className="h-5 w-5 shrink-0 text-primary-500" />
                 <div className="min-w-0">
-                  <div className="text-xs text-slate-400">Lulusan</div>
+                  <div className="text-xs text-slate-500">Lulusan</div>
                   <div className="truncate text-sm font-semibold text-slate-700">
                     {ustadz.almaMater}
                   </div>
@@ -191,7 +193,7 @@ export default function UstadzDetailPage({
               <div className="flex items-center gap-3 rounded-xl border border-sand-200 p-3">
                 <Phone className="h-5 w-5 shrink-0 text-primary-500" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs text-slate-400">Kontak</div>
+                  <div className="text-xs text-slate-500">Kontak</div>
                   <div className="text-sm font-semibold text-slate-700">
                     {ustadz.contact.phone}
                   </div>
@@ -209,6 +211,7 @@ export default function UstadzDetailPage({
             </div>
           </div>
         </div>
+        </Reveal>
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left: Bio + Schedule */}
@@ -255,7 +258,7 @@ export default function UstadzDetailPage({
                 <h2 className="font-display text-lg font-bold text-slate-800">
                   Jadwal Ketersediaan
                 </h2>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-500">
                   Klik slot untuk booking
                 </span>
               </div>
@@ -273,7 +276,7 @@ export default function UstadzDetailPage({
                         slot.booked ? (
                           <div
                             key={slot.time}
-                            className="rounded-lg bg-sand-100 px-2 py-1.5 text-xs text-slate-400 line-through"
+                            className="rounded-lg bg-sand-100 px-2 py-1.5 text-xs text-slate-500 line-through"
                           >
                             {slot.time}
                           </div>
@@ -303,7 +306,7 @@ export default function UstadzDetailPage({
                 {ustadz.rating.toFixed(1)}
               </div>
               <StarRating rating={ustadz.rating} size={18} />
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-500">
                 Berdasarkan {ustadz.reviewCount} ulasan
               </p>
               <Link

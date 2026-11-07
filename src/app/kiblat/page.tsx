@@ -132,7 +132,7 @@ export default function KiblatPage() {
 
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         {locStatus === "loading" && (
-          <div className="flex items-center justify-center py-12 text-slate-400">
+          <div className="flex items-center justify-center py-12 text-slate-500">
             <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
             <span className="ml-2 text-sm">Mencari lokasi Anda...</span>
           </div>
@@ -294,7 +294,7 @@ export default function KiblatPage() {
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-sand-200 bg-white p-4 text-center">
                 <Navigation className="mx-auto h-6 w-6 text-primary-500" />
-                <div className="mt-2 text-xs text-slate-400">Arah Kiblat</div>
+                <div className="mt-2 text-xs text-slate-500">Arah Kiblat</div>
                 <div className="font-display text-2xl font-bold text-slate-800">
                   {bearing.toFixed(1)}°
                 </div>
@@ -302,7 +302,7 @@ export default function KiblatPage() {
               </div>
               <div className="rounded-xl border border-sand-200 bg-white p-4 text-center">
                 <MapPin className="mx-auto h-6 w-6 text-primary-500" />
-                <div className="mt-2 text-xs text-slate-400">Jarak ke Ka&apos;bah</div>
+                <div className="mt-2 text-xs text-slate-500">Jarak ke Ka&apos;bah</div>
                 <div className="font-display text-2xl font-bold text-slate-800">
                   {distance != null ? formatDistance(distance) : "-"}
                 </div>
@@ -312,7 +312,7 @@ export default function KiblatPage() {
               </div>
               <div className="rounded-xl border border-sand-200 bg-white p-4 text-center">
                 <Compass className="mx-auto h-6 w-6 text-primary-500" />
-                <div className="mt-2 text-xs text-slate-400">Heading Anda</div>
+                <div className="mt-2 text-xs text-slate-500">Heading Anda</div>
                 <div className="font-display text-2xl font-bold text-slate-800">
                   {heading != null ? `${heading.toFixed(0)}°` : "—"}
                 </div>
@@ -341,7 +341,7 @@ export default function KiblatPage() {
               </ol>
             </div>
 
-            <p className="mt-4 text-center text-xs text-slate-400">
+            <p className="mt-4 text-center text-xs text-slate-500">
               * Akurasi bergantung pada sensor perangkat. Untuk kepastian, gunakan kompas fisik atau aplikasi kiblat tersertifikasi.
             </p>
           </>

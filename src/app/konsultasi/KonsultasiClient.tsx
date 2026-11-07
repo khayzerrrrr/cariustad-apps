@@ -112,12 +112,12 @@ export default function KonsultasiClient({
           >
             <div className="border-b border-sand-200 p-3">
               <div className="flex items-center gap-2 rounded-lg bg-sand-50 px-3">
-                <Search className="h-4 w-4 text-slate-400" />
+                <Search className="h-4 w-4 text-slate-500" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Cari ustadz..."
-                  className="w-full bg-transparent py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+                  className="w-full bg-transparent py-2 text-sm text-slate-700 placeholder:text-slate-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function KonsultasiClient({
                     <div className="truncate text-sm font-semibold text-slate-800">
                       {u.title} {u.name}
                     </div>
-                    <div className="truncate text-xs text-slate-400">
+                    <div className="truncate text-xs text-slate-500">
                       {u.specializations[0]}
                     </div>
                   </div>
@@ -178,7 +178,7 @@ export default function KonsultasiClient({
                 <div className="truncate font-semibold text-slate-800">
                   {activeUstadz.title} {activeUstadz.name}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-slate-400">
+                <div className="flex items-center gap-1 text-xs text-slate-500">
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
                       activeUstadz.available ? "bg-green-500" : "bg-sand-300"
@@ -208,7 +208,7 @@ export default function KonsultasiClient({
                     <p>{m.text}</p>
                     <span
                       className={`mt-1 block text-[10px] ${
-                        m.sender === "user" ? "text-primary-100" : "text-slate-400"
+                        m.sender === "user" ? "text-primary-100" : "text-slate-500"
                       }`}
                     >
                       {m.time}
@@ -240,7 +240,7 @@ export default function KonsultasiClient({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Tulis pesan..."
-                className="flex-1 rounded-xl bg-sand-100 px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="flex-1 rounded-xl bg-sand-100 px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-400"
               />
               <button
                 type="submit"
@@ -253,7 +253,7 @@ export default function KonsultasiClient({
           </div>
         </div>
 
-        <p className="mt-3 text-center text-xs text-slate-400">
+        <p className="mt-3 text-center text-xs text-slate-500">
           <Sparkles className="mr-1 inline h-3 w-3 text-primary-400" />
           Konsultasi online berbantuan AI — balasan mewakili gaya &amp; keilmuan
           ustadz/ustadzah terpilih untuk demo hackathon. Untuk fatwa resmi,

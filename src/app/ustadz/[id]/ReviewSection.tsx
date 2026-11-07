@@ -197,7 +197,7 @@ export default function ReviewSection({
         {reviews.length === 0 ? (
           <div className="rounded-xl border border-dashed border-sand-200 py-8 text-center">
             <Quote className="mx-auto h-8 w-8 text-sand-300" />
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-slate-500">
               Belum ada ulasan. Jadilah yang pertama!
             </p>
           </div>
@@ -212,7 +212,7 @@ export default function ReviewSection({
                   <div className="font-semibold text-slate-800">
                     {r.authorName}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-slate-500">
                     {r.event} • {r.date}
                   </div>
                 </div>

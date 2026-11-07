@@ -102,10 +102,10 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-sand-200 pt-6 sm:flex-row">
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             © 2026 CariUstadz. Dibuat untuk Hackathon.
           </p>
-          <p className="flex items-center gap-1.5 text-xs text-slate-400">
+          <p className="flex items-center gap-1.5 text-xs text-slate-500">
             <BookOpen className="h-3.5 w-3.5 text-primary-400" />
             &ldquo;Menuntut ilmu adalah kewajiban setiap muslim.&rdquo;
           </p>

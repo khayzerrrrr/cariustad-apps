@@ -7,7 +7,7 @@ export default function UstadzPage({
   searchParams: { q?: string; spec?: string };
 }) {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-400">Memuat...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Memuat...</div>}>
       <DirektoriClient initialQ={searchParams.q ?? ""} initialSpec={searchParams.spec ?? ""} />
     </Suspense>
   );

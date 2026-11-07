@@ -154,7 +154,7 @@ export default function TentangPage() {
             {features.map((f) => (
               <div
                 key={f.title}
-                className="rounded-2xl border border-sand-200 bg-sand-50 p-6 text-center transition-all hover:border-primary-200 hover:shadow-md"
+                className="rounded-2xl border border-sand-200 bg-sand-50 p-6 text-center transition hover:border-primary-200 hover:shadow-md"
               >
                 <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm">
                   <f.icon className="h-6 w-6" />

@@ -7,6 +7,7 @@ import { ALL_SPECIALIZATIONS, ALL_CITIES } from "@/lib/types";
 import { ALL_PROVINCES, PROVINCE_CITIES } from "@/lib/regions";
 import { haversine, formatDistance } from "@/lib/geo";
 import UstadzCard from "@/components/UstadzCard";
+import StaggerShaf from "@/components/motion/StaggerShaf";
 
 type SortKey = "rating" | "experience" | "fee-low" | "fee-high" | "distance";
 
@@ -162,7 +163,7 @@ export default function DirektoriClient({
 
   const LocationSection = () => (
     <div className="mt-5">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
         Lokasi & Jarak
       </h3>
       <button
@@ -206,7 +207,7 @@ export default function DirektoriClient({
           </div>
 
           <div className="mt-3">
-            <label className="text-xs text-slate-400">Radius</label>
+            <label className="text-xs text-slate-500">Radius</label>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {RADIUS_OPTIONS.map((r) => (
                 <button
@@ -243,15 +244,15 @@ export default function DirektoriClient({
           {/* Search bar */}
           <div className="mt-4 flex gap-2">
             <div className="flex flex-1 items-center gap-2 rounded-xl border border-sand-200 bg-sand-50 px-3">
-              <Search className="h-5 w-5 text-slate-400" />
+              <Search className="h-5 w-5 text-slate-500" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Cari nama atau bidang keahlian..."
-                className="w-full bg-transparent py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+                className="w-full bg-transparent py-2.5 text-sm text-slate-700 placeholder:text-slate-500 focus:outline-none"
               />
               {q && (
-                <button onClick={() => setQ("")} className="text-slate-400 hover:text-slate-600">
+                <button onClick={() => setQ("")} className="text-slate-500 hover:text-slate-600">
                   <X className="h-4 w-4" />
                 </button>
               )}
@@ -292,7 +293,7 @@ export default function DirektoriClient({
 
             {/* Spesialisasi */}
             <div className="mt-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Spesialisasi
               </h3>
               <div className="mt-3 space-y-2">
@@ -315,7 +316,7 @@ export default function DirektoriClient({
 
             {/* Kota */}
             <div className="mt-5">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Provinsi &amp; Kota
               </h3>
               <select
@@ -375,12 +376,12 @@ export default function DirektoriClient({
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-slate-800">Filter</h2>
                 <button onClick={() => setShowFilters(false)}>
-                  <X className="h-5 w-5 text-slate-400" />
+                  <X className="h-5 w-5 text-slate-500" />
                 </button>
               </div>
               <LocationSection />
               <div className="mt-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Spesialisasi
                 </h3>
                 <div className="mt-3 space-y-2">
@@ -401,7 +402,7 @@ export default function DirektoriClient({
                 </div>
               </div>
               <div className="mt-5">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Provinsi &amp; Kota
                 </h3>
                 <select
@@ -488,7 +489,7 @@ export default function DirektoriClient({
               <p className="mt-3 font-medium text-slate-600">
                 Tidak ada ustadz yang cocok
               </p>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-slate-500">
                 Coba ubah kata kunci, perbesar radius, atau reset filter.
               </p>
               <button
@@ -499,7 +500,7 @@ export default function DirektoriClient({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <StaggerShaf className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((u) => (
                 <UstadzCard
                   key={u.id}
@@ -507,7 +508,7 @@ export default function DirektoriClient({
                   distance={userLoc ? distanceMap[u.id] ?? null : null}
                 />
               ))}
-            </div>
+            </StaggerShaf>
           )}
         </div>
       </div>

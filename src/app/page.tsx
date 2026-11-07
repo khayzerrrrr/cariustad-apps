@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Search,
   CalendarCheck,
@@ -23,6 +26,11 @@ import UstadzCard from "@/components/UstadzCard";
 import HeroSearch from "@/components/HeroSearch";
 import HadithWidget from "@/components/HadithWidget";
 import IslamicHeroBg from "@/components/IslamicHeroBg";
+import Reveal from "@/components/motion/Reveal";
+import StaggerShaf from "@/components/motion/StaggerShaf";
+import CountUp from "@/components/motion/CountUp";
+import WordReveal from "@/components/motion/WordReveal";
+import AgentFlowScroll from "@/components/motion/AgentFlowScroll";
 
 const steps = [
   {
@@ -45,7 +53,23 @@ const steps = [
   },
 ];
 
+// hero reveal berurutan: tenang, satu per satu — seperti masuk shaf
+const heroContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.14, delayChildren: 0.1 } },
+};
+const heroItem = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
+  },
+};
+
 export default function HomePage() {
+  const reduced = useReducedMotion();
+
   const featured = [...ustadzData]
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 6);
@@ -71,11 +95,30 @@ export default function HomePage() {
   };
 
   const stats = [
-    { label: "Ustadz Terverifikasi", value: `${ustadzData.length}+`, icon: Users },
-    { label: "Kota Terjangkau", value: `${ALL_CITIES.length}`, icon: MapPin },
-    { label: "Bidang Keahlian", value: `${ALL_SPECIALIZATIONS.length}`, icon: Sparkles },
-    { label: "Rating Rata-rata", value: "4.8", icon: Star },
+    {
+      label: "Ustadz Terverifikasi",
+      value: ustadzData.length,
+      suffix: "+",
+      icon: Users,
+    },
+    { label: "Kota Terjangkau", value: ALL_CITIES.length, suffix: "", icon: MapPin },
+    {
+      label: "Bidang Keahlian",
+      value: ALL_SPECIALIZATIONS.length,
+      suffix: "",
+      icon: Sparkles,
+    },
+    { label: "Rating Rata-rata", value: 48, suffix: "", icon: Star, decimal: true },
   ];
+
+  const hero = (children: React.ReactNode, key: string) =>
+    reduced ? (
+      <div key={key}>{children}</div>
+    ) : (
+      <motion.div key={key} variants={heroItem}>
+        {children}
+      </motion.div>
+    );
 
   return (
     <>
@@ -84,26 +127,46 @@ export default function HomePage() {
         <IslamicHeroBg />
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
           <div className="mx-auto max-w-3xl text-center">
-            {/* Bismillah */}
-            <p
-              dir="rtl"
-              className="mb-4 font-display text-xl text-gold-300/70 sm:text-2xl"
+            <motion.div
+              variants={reduced ? undefined : heroContainer}
+              initial={reduced ? undefined : "hidden"}
+              animate={reduced ? undefined : "visible"}
             >
-              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-            </p>
-            <span className="hero-text-shadow inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-white backdrop-blur-md ring-1 ring-white/20">
-              <Sparkles className="h-3.5 w-3.5" />
-              Platform dakwah digital #1 di Indonesia
-            </span>
-            <h1 className="hero-text-shadow mt-5 font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-              Temukan Ustadz Terpercaya untuk{" "}
-              <span className="hero-glow text-gold-400">Setiap Kebutuhan Dakwah</span>
-            </h1>
-            <p className="hero-text-shadow mx-auto mt-5 max-w-xl text-base text-primary-50/95 sm:text-lg">
-              Kajian rutin, ceramah, nikah, hingga konsultasi keluarga —
-              semua dalam satu platform. Cari, undang, dan konsultasi dengan
-              ustadz terverifikasi di seluruh Indonesia.
-            </p>
+              {hero(
+                <p
+                  dir="rtl"
+                  className="mb-4 font-display text-xl text-gold-300/70 sm:text-2xl"
+                >
+                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                </p>,
+                "bismillah"
+              )}
+              {hero(
+                <span className="hero-text-shadow inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-white backdrop-blur-md ring-1 ring-white/20">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Platform dakwah digital #1 di Indonesia
+                </span>,
+                "badge"
+              )}
+              {hero(
+                <h1 className="hero-text-shadow mt-5 font-display text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+                  <WordReveal
+                    text="Temukan Ustadz Terpercaya untuk Setiap Kebutuhan Dakwah"
+                    highlightClass="hero-glow text-gold-400"
+                    highlightWords={["Kebutuhan", "Dakwah"]}
+                  />
+                </h1>,
+                "headline"
+              )}
+              {hero(
+                <p className="hero-text-shadow mx-auto mt-5 max-w-xl text-base text-primary-50/95 sm:text-lg">
+                  Kajian rutin, ceramah, nikah, hingga konsultasi keluarga —
+                  semua dalam satu platform. Cari, undang, dan konsultasi dengan
+                  ustadz terverifikasi di seluruh Indonesia.
+                </p>,
+                "sub"
+              )}
+            </motion.div>
           </div>
 
           <div className="mx-auto mt-8 max-w-2xl">
@@ -115,7 +178,7 @@ export default function HomePage() {
                   <Link
                     key={t}
                     href={`/ustadz?spec=${encodeURIComponent(t)}`}
-                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/20 backdrop-blur-sm transition-colors hover:bg-white/20"
+                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/20 backdrop-blur-sm transition-colors duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/20"
                   >
                     {t}
                   </Link>
@@ -126,38 +189,44 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Stats — count-up saat masuk viewport */}
       <section className="border-b border-sand-200 bg-white">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 py-8 sm:px-6 md:grid-cols-4 lg:px-8">
           {stats.map((s) => (
-            <div key={s.label} className="flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
-                <s.icon className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="font-display text-2xl font-bold text-slate-800">
-                  {s.value}
+            <Reveal key={s.label} y={16}>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                  <s.icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="font-display text-2xl font-bold text-slate-800">
+                    {s.decimal ? (
+                      <span>{(s.value / 10).toFixed(1)}</span>
+                    ) : (
+                      <CountUp value={s.value} suffix={s.suffix} />
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-500">{s.label}</div>
                 </div>
-                <div className="text-xs text-slate-500">{s.label}</div>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
-      {/* Cara Kerja */}
+      {/* Cara Kerja — masuk shaf */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="font-display text-2xl font-bold text-slate-800 sm:text-3xl">
+        <Reveal className="text-center">
+          <h2 className="display-safe font-display text-2xl font-bold text-slate-800 sm:text-3xl">
             Cara Kerja CariUstadz
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-slate-500">
+          <p className="mx-auto mt-3 max-w-xl text-slate-600">
             Tiga langkah mudah untuk mendapatkan ustadz yang tepat untuk
             acara dan kebutuhan Anda.
           </p>
-        </div>
+        </Reveal>
 
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <StaggerShaf className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
           {steps.map((step, i) => (
             <div
               key={step.title}
@@ -177,74 +246,81 @@ export default function HomePage() {
               <p className="mt-2 text-sm text-slate-500">{step.desc}</p>
             </div>
           ))}
-        </div>
+        </StaggerShaf>
       </section>
+
+      {/* SIGNATURE: Alur agen 11 langkah — pin + scrub */}
+      <AgentFlowScroll />
 
       {/* AI Assistant CTA */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-6 py-10 sm:px-10 sm:py-12">
-          <div className="grid items-center gap-6 md:grid-cols-[1fr_auto]">
-            <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                <Bot className="h-3.5 w-3.5" />
-                AI Agent — Challenge B
-              </span>
-              <h2 className="mt-3 font-display text-2xl font-bold text-emerald-900 sm:text-3xl">
-                Ngobrol Langsung dengan Asisten AI CariUstadz
-              </h2>
-              <p className="mt-2 max-w-xl text-sm text-gray-600 sm:text-base">
-                AI Agent dengan avatar 3D, voice interaksi, kesadaran budaya Islam
-                (salat Jumat, preferensi gender), dan akuntabilitas penuh.
-                Cari ustadz cukup dengan chat atau suara — undangan dengan persetujuan Anda.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["Voice & Text", "Cultural Rules", "Human-in-the-Loop", "Audit Log"].map((f) => (
-                  <span
-                    key={f}
-                    className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-medium text-emerald-600"
-                  >
-                    {f}
-                  </span>
-                ))}
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-teal-50 px-6 py-10 sm:px-10 sm:py-12">
+            <div className="grid items-center gap-6 md:grid-cols-[1fr_auto]">
+              <div>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <Bot className="h-3.5 w-3.5" />
+                  AI Agent — Challenge B
+                </span>
+                <h2 className="display-safe mt-3 font-display text-2xl font-bold text-emerald-900 sm:text-3xl">
+                  Ngobrol Langsung dengan Asisten AI CariUstadz
+                </h2>
+                <p className="mt-2 max-w-xl text-sm text-gray-600 sm:text-base">
+                  AI Agent dengan avatar, voice interaksi, kesadaran budaya Islam
+                  (salat Jumat, preferensi gender), dan akuntabilitas penuh.
+                  Cari ustadz cukup dengan chat atau suara — undangan dengan persetujuan Anda.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {["Voice & Text", "Cultural Rules", "Human-in-the-Loop", "Audit Log"].map((f) => (
+                    <span
+                      key={f}
+                      className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-medium text-emerald-600"
+                    >
+                      {f}
+                    </span>
+                  ))}
+                </div>
               </div>
+              <Link
+                href="/asisten"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 transition-[background-color,box-shadow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-emerald-700 hover:shadow-xl"
+              >
+                <Bot className="h-5 w-5" />
+                Buka Asisten AI
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <Link
-              href="/asisten"
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-700 hover:shadow-xl"
-            >
-              <Bot className="h-5 w-5" />
-              Buka Asisten AI
-              <ArrowRight className="h-4 w-4" />
-            </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* Featured Ustadz */}
+      {/* Featured Ustadz — masuk shaf */}
       <section className="bg-sand-100 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-slate-800 sm:text-3xl">
-                Ustadz Pilihan
-              </h2>
-              <p className="mt-2 text-slate-500">
-                Ustadz dengan rating tertinggi dan paling banyak direkomendasikan.
-              </p>
+          <Reveal>
+            <div className="flex items-end justify-between">
+              <div>
+                <h2 className="display-safe font-display text-2xl font-bold text-slate-800 sm:text-3xl">
+                  Ustadz Pilihan
+                </h2>
+                <p className="mt-2 text-slate-600">
+                  Ustadz dengan rating tertinggi dan paling banyak direkomendasikan.
+                </p>
+              </div>
+              <Link
+                href="/ustadz"
+                className="hidden items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 sm:inline-flex"
+              >
+                Lihat semua <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <Link
-              href="/ustadz"
-              className="hidden items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 sm:inline-flex"
-            >
-              Lihat semua <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+          </Reveal>
 
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <StaggerShaf className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((u) => (
               <UstadzCard key={u.id} ustadz={u} />
             ))}
-          </div>
+          </StaggerShaf>
 
           <div className="mt-8 text-center sm:hidden">
             <Link
@@ -260,96 +336,97 @@ export default function HomePage() {
       {/* Hadith + Quick Islamic Tools */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Hadith Widget */}
-          <div className="lg:col-span-2">
+          <Reveal className="lg:col-span-2">
             <HadithWidget />
-          </div>
+          </Reveal>
 
-          {/* Quick Islamic Tools */}
-          <div className="space-y-3">
-            <h3 className="font-display text-lg font-bold text-slate-800">
-              Tools Islami
-            </h3>
-            {[
-              {
-                href: "/sholat",
-                label: "Jadwal Sholat",
-                desc: "Waktu sholat & imsak",
-                icon: Clock,
-                color: "bg-primary-50 text-primary-600",
-              },
-              {
-                href: "/kiblat",
-                label: "Arah Kiblat",
-                desc: "Kompas kiblat live",
-                icon: Compass,
-                color: "bg-teal-50 text-teal-600",
-              },
-              {
-                href: "/hadith",
-                label: "Hadith Harian",
-                desc: "Kumpulan hadith pilihan",
-                icon: BookOpen,
-                color: "bg-gold-50 text-gold-600",
-              },
-              {
-                href: "/tracking",
-                label: "Lihat Perjalanan",
-                desc: "Pantau perjalanan ustadz/ustadzah",
-                icon: Navigation,
-                color: "bg-blue-50 text-blue-600",
-              },
-            ].map((tool) => (
-              <Link
-                key={tool.href}
-                href={tool.href}
-                className="group flex items-center gap-3 rounded-xl border border-sand-200 bg-white p-3 transition-all hover:border-primary-300 hover:shadow-md"
-              >
-                <span
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-lg ${tool.color}`}
+          <Reveal delay={0.1}>
+            <div className="space-y-3">
+              <h3 className="font-display text-lg font-bold text-slate-800">
+                Tools Islami
+              </h3>
+              {[
+                {
+                  href: "/sholat",
+                  label: "Jadwal Sholat",
+                  desc: "Waktu sholat & imsak",
+                  icon: Clock,
+                  color: "bg-primary-50 text-primary-600",
+                },
+                {
+                  href: "/kiblat",
+                  label: "Arah Kiblat",
+                  desc: "Kompas kiblat live",
+                  icon: Compass,
+                  color: "bg-teal-50 text-teal-600",
+                },
+                {
+                  href: "/hadith",
+                  label: "Hadith Harian",
+                  desc: "Kumpulan hadith pilihan",
+                  icon: BookOpen,
+                  color: "bg-gold-50 text-gold-600",
+                },
+                {
+                  href: "/tracking",
+                  label: "Lihat Perjalanan",
+                  desc: "Pantau perjalanan ustadz/ustadzah",
+                  icon: Navigation,
+                  color: "bg-blue-50 text-blue-600",
+                },
+              ].map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="group flex items-center gap-3 rounded-xl border border-sand-200 bg-white p-3 transition-[border-color,box-shadow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:shadow-md"
                 >
-                  <tool.icon className="h-5 w-5" />
-                </span>
-                <div className="flex-1">
-                  <div className="text-sm font-semibold text-slate-700 group-hover:text-primary-700">
-                    {tool.label}
+                  <span
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-lg ${tool.color}`}
+                  >
+                    <tool.icon className="h-5 w-5" />
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-slate-700 group-hover:text-primary-700">
+                      {tool.label}
+                    </div>
+                    <div className="text-xs text-slate-500">{tool.desc}</div>
                   </div>
-                  <div className="text-xs text-slate-400">{tool.desc}</div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-primary-500" />
-              </Link>
-            ))}
-          </div>
+                  <ArrowRight className="h-4 w-4 text-slate-300 transition-transform duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:translate-x-0.5 group-hover:text-primary-500" />
+                </Link>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* Kajian Preview */}
+      {/* Kajian Preview — masuk shaf */}
       <section className="bg-sand-100 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between">
-            <div>
-              <h2 className="font-display text-2xl font-bold text-slate-800 sm:text-3xl">
-                Kajian Mendatang
-              </h2>
-              <p className="mt-2 text-slate-500">
-                Jangan lewatkan kajian dan pengajian terdekat di kota Anda.
-              </p>
+          <Reveal>
+            <div className="flex items-end justify-between">
+              <div>
+                <h2 className="display-safe font-display text-2xl font-bold text-slate-800 sm:text-3xl">
+                  Kajian Mendatang
+                </h2>
+                <p className="mt-2 text-slate-600">
+                  Jangan lewatkan kajian dan pengajian terdekat di kota Anda.
+                </p>
+              </div>
+              <Link
+                href="/kajian"
+                className="hidden items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 sm:inline-flex"
+              >
+                Lihat semua <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <Link
-              href="/kajian"
-              className="hidden items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700 sm:inline-flex"
-            >
-              Lihat semua <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+          </Reveal>
 
-          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+          <StaggerShaf className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
             {upcomingKajian.map((k) => (
               <div
                 key={k.id}
-                className="flex flex-col rounded-2xl border border-sand-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+                className="flex flex-col rounded-2xl border border-sand-200 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md"
               >
-                {/* Date block */}
                 <div className="flex items-start gap-3">
                   <div className="flex flex-col items-center justify-center rounded-xl bg-primary-600 px-3 py-2 text-white">
                     <span className="text-xs font-medium uppercase">
@@ -413,31 +490,31 @@ export default function HomePage() {
                 </div>
               </div>
             ))}
-          </div>
+          </StaggerShaf>
 
           <div className="mt-8 text-center sm:hidden">
             <Link
               href="/kajian"
               className="inline-flex items-center gap-1 text-sm font-semibold text-primary-600"
             >
-              Lihat semua kajian <ArrowRight className="h-4 w-4" />
+              Lihat semua kajian <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Spesialisasi */}
+      {/* Spesialisasi — masuk shaf */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h2 className="font-display text-2xl font-bold text-slate-800 sm:text-3xl">
+        <Reveal className="text-center">
+          <h2 className="display-safe font-display text-2xl font-bold text-slate-800 sm:text-3xl">
             Jelajahi Bidang Keahlian
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-slate-500">
+          <p className="mx-auto mt-3 max-w-xl text-slate-600">
             Temukan ustadz sesuai kebutuhan, dari tafsir hingga ekonomi syariah.
           </p>
-        </div>
+        </Reveal>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <StaggerShaf className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {ALL_SPECIALIZATIONS.map((spec) => {
             const count = ustadzData.filter((u) =>
               u.specializations.includes(spec)
@@ -446,47 +523,49 @@ export default function HomePage() {
               <Link
                 key={spec}
                 href={`/ustadz?spec=${encodeURIComponent(spec)}`}
-                className="group rounded-xl border border-sand-200 bg-white p-4 text-center transition-all hover:border-primary-300 hover:bg-primary-50/40 hover:shadow-md"
+                className="group rounded-xl border border-sand-200 bg-white p-4 text-center transition-[border-color,background-color,box-shadow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-primary-300 hover:bg-primary-50/40 hover:shadow-md"
               >
                 <div className="font-medium text-slate-700 group-hover:text-primary-700">
                   {spec}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">{count} ustadz</div>
+                <div className="mt-1 text-xs text-slate-500">{count} ustadz</div>
               </Link>
             );
           })}
-        </div>
+        </StaggerShaf>
       </section>
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900 px-6 py-12 text-center shadow-lg sm:px-12 sm:py-16">
-          <div className="islamic-pattern absolute inset-0 opacity-[0.07]" />
-          <div className="relative">
-            <ShieldCheck className="mx-auto h-10 w-10 text-gold-400" />
-            <h2 className="mt-4 font-display text-2xl font-bold text-white sm:text-3xl">
-              Siap Menghadirkan Kajian yang Berkah?
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg text-primary-50/90">
-              Bergabung dengan ribuan jamaah dan panitia yang telah mempercayai
-              CariUstadz untuk mengakses ustadz terverifikasi.
-            </p>
-            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/ustadz"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-primary-700 shadow-sm transition-transform hover:scale-105"
-              >
-                Mulai Cari Ustadz <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/tentang"
-                className="inline-flex items-center rounded-xl border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-              >
-                Pelajari Platform
-              </Link>
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-900 via-primary-850 to-teal-900 px-6 py-12 text-center shadow-lg sm:px-12 sm:py-16">
+            <div className="islamic-pattern absolute inset-0 opacity-[0.07]" />
+            <div className="relative">
+              <ShieldCheck className="mx-auto h-10 w-10 text-gold-400" />
+              <h2 className="display-safe mt-4 font-display text-2xl font-bold text-white sm:text-3xl">
+                Siap Menghadirkan Kajian yang Berkah?
+              </h2>
+              <p className="mx-auto mt-3 max-w-lg text-primary-50/90">
+                Bergabung dengan ribuan jamaah dan panitia yang telah mempercayai
+                CariUstadz untuk mengakses ustadz terverifikasi.
+              </p>
+              <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/ustadz"
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-primary-700 shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-105"
+                >
+                  Mulai Cari Ustadz <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/tentang"
+                  className="inline-flex items-center rounded-xl border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-colors duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white/10"
+                >
+                  Pelajari Platform
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
     </>
   );

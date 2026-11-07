@@ -39,6 +39,13 @@ const config: Config = {
           200: "#e7e5e4",
         },
       },
+      // Motion language CariUstadz — "shaf yang terbentuk"
+      // (Invention Gate: tenang, grounded, respons instan, menetap dengan pasti)
+      transitionTimingFunction: {
+        "ease-primary": "cubic-bezier(0.4, 0, 0.2, 1)", // interaksi: hover, tombol
+        "ease-reveal": "cubic-bezier(0.16, 1, 0.3, 1)", // reveal: rasa menetap
+        "ease-transition": "cubic-bezier(0.65, 0, 0.35, 1)", // pindah halaman
+      },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "serif"],

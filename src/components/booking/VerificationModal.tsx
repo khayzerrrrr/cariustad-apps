@@ -72,7 +72,7 @@ export default function VerificationModal({
         <button
           onClick={onClose}
           aria-label="Tutup"
-          className="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
+          className="absolute right-4 top-4 text-slate-500 hover:text-slate-600"
         >
           <X className="h-5 w-5" />
         </button>
@@ -115,7 +115,7 @@ export default function VerificationModal({
 
             <div className="mt-4 flex gap-2">
               <div className="relative flex-1">
-                <Smartphone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Smartphone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -185,7 +185,7 @@ export default function VerificationModal({
               </div>
             )}
 
-            <p className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-400">
+            <p className="mt-4 flex items-center gap-1.5 text-[11px] text-slate-500">
               <ShieldCheck className="h-3 w-3" />
               Nomor Anda hanya dipakai untuk konfirmasi undangan — tidak
               dibagikan ke pihak lain.

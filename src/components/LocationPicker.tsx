@@ -379,7 +379,7 @@ export default function LocationPicker({
       {/* Search bar — Google Maps style */}
       <div className="relative z-30">
         <div className="flex items-center gap-2 rounded-xl border border-sand-200 bg-white px-3 py-2 shadow-sm focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500">
-          <Search className="h-4 w-4 flex-shrink-0 text-slate-400" />
+          <Search className="h-4 w-4 flex-shrink-0 text-slate-500" />
           <input
             value={query}
             onChange={(e) => {
@@ -395,7 +395,7 @@ export default function LocationPicker({
               if (results.length > 0) setShowResults(true);
             }}
             placeholder="Cari alamat, masjid, gedung, atau lokasi..."
-            className="flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+            className="flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-500"
             autoComplete="off"
           />
           {searching && (
@@ -405,7 +405,7 @@ export default function LocationPicker({
             <button
               type="button"
               onClick={clearSearch}
-              className="flex-shrink-0 rounded-full p-0.5 text-slate-400 hover:bg-sand-100 hover:text-slate-600"
+              className="flex-shrink-0 rounded-full p-0.5 text-slate-500 hover:bg-sand-100 hover:text-slate-600"
             >
               <X className="h-4 w-4" />
             </button>
@@ -440,7 +440,7 @@ export default function LocationPicker({
               >
                 <MapPin
                   className={`mt-0.5 h-4 w-4 flex-shrink-0 ${
-                    activeIndex === i ? "text-primary-600" : "text-slate-400"
+                    activeIndex === i ? "text-primary-600" : "text-slate-500"
                   }`}
                 />
                 <div className="min-w-0">
@@ -452,7 +452,7 @@ export default function LocationPicker({
                     {r.name}
                   </div>
                   {r.detail && (
-                    <div className="truncate text-xs text-slate-400">
+                    <div className="truncate text-xs text-slate-500">
                       {r.detail}
                     </div>
                   )}
@@ -497,7 +497,7 @@ export default function LocationPicker({
       )}
 
       {!value && !error && !searching && (
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
           <NavIcon className="h-3.5 w-3.5" />
           Ketik untuk mencari, klik peta, atau gunakan
           <button
