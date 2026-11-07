@@ -387,7 +387,7 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
       ? {
           field: "city",
           ask:
-            `Siap. Sebelum saya carikan — acaranya di kota apa? ` +
+            `Siap. Sebelum saya carikan ustadz yang tepat — acaranya di kota apa? ` +
             `Kalau belum pasti, sebutkan saja area sekitarnya.`,
         }
       : null,
@@ -395,8 +395,8 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
       ? {
           field: "time",
           ask:
-            `Kapan rencananya? Sebutkan hari dan jamnya — misalnya "Sabtu jam 20:00". ` +
-            `Itu perlu saya cek juga terhadap aturan waktu, misalnya Salat Jumat.`,
+            `Kapan rencananya? Sebutkan hari dan jamnya — misalnya "Sabtu jam 20:00" — ` +
+            `supaya saya bisa cek ketersediaan ustadz dan aturan waktu, misalnya Salat Jumat.`,
         }
       : null,
   ].filter(Boolean) as Array<{ field: string; ask: string }>;

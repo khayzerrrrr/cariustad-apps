@@ -128,6 +128,7 @@ ${draft}
 ATURAN DRAF:
 - Tulis ulang draf di atas dengan bahasa yang natural dan mengalir — bukan sekadar menyalin.
 - JANGAN mengubah: nama ustadz, urutan pilihan, angka (rating, biaya, jam), hari, kota, atau jumlah peserta.
+- JANGAN menyebutkan hari, tanggal, jam, kota, atau detail apa pun yang tidak ada di draf, konteks booking, atau riwayat percakapan. Detail yang tidak tertulis = TIDAK ADA; jangan pernah melengkapinya sendiri.
 - Pertahankan SEMUA tautan berformat [teks](/path) persis seperti aslinya. Tautan undangan adalah bagian wajib dari jawaban — pengguna harus selalu tahu cara melanjutkan booking.
 - Pertahankan semua peringatan (waktu salat, Salat Jumat, ketersediaan) — jangan dihaluskan sampai hilang maknanya.
 - Jangan menambah ustadz, angka, atau janji yang tidak ada di draf atau data terverifikasi.
@@ -148,6 +149,36 @@ ATURAN DRAF:
         { error: "hallucinated_names", names: unknown },
         { status: 422 }
       );
+    }
+
+    /**
+     * Guard anti-halusinasi hari: model yang menulis ulang draf tidak boleh
+     * menyebut nama hari yang tidak pernah muncul di draf, pesan pengguna,
+     * atau riwayat. Ini yang mencegah jawaban "tersedia Selasa" padahal
+     * pengguna minta Rabu. Pelanggaran = 422 → klien jatuh ke mesin lokal.
+     */
+    if (draft) {
+      const DAY_RE = /\b(senin|selasa|rabu|kamis|jumat|sabtu|minggu|ahad)\b/gi;
+      const allowedText = [
+        draft,
+        message,
+        (body.history ?? []).map((h) => h.content).join(" "),
+      ]
+        .join(" ")
+        .toLowerCase();
+      const allowed = new Set(
+        (allowedText.match(DAY_RE) ?? []).map((d) => d.toLowerCase())
+      );
+      const mentioned = (result.text.match(DAY_RE) ?? []).map((d) =>
+        d.toLowerCase()
+      );
+      const fabricated = mentioned.filter((d) => !allowed.has(d));
+      if (fabricated.length > 0) {
+        return NextResponse.json(
+          { error: "hallucinated_details", details: fabricated },
+          { status: 422 }
+        );
+      }
     }
 
     return NextResponse.json({

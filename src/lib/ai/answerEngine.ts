@@ -245,17 +245,35 @@ export async function answer(
   /* 3. Jalur LLM server: DeepSeek → cadangan OpenRouter.
      Mesin lokal sudah menghitung data terverifikasi (kandidat ustadz,
      link undang, peringatan waktu) — dikirim sebagai draf agar model
-     hanya menuliskan ulang, bukan mengarang. */
+     hanya menuliskan ulang, bukan mengarang. Ringkasan booking disertakan
+     agar model tidak mengarang hari/jam/kota yang tidak ada di teks draf. */
   const verifiedRows = local.data?.list?.length
     ? formatVerifiedRows(local.data.list)
     : undefined;
+
+  const bookingContext = (() => {
+    const p = local.parsedBooking;
+    if (!p) return "";
+    const parts = [
+      p.eventType ? `jenis acara: ${p.eventType}` : null,
+      p.day ? `hari: ${p.day}` : null,
+      p.startTime ? `jam: ${p.startTime}${p.endTime ? `-${p.endTime}` : ""} WIB` : null,
+      p.city ? `kota: ${p.city}` : null,
+      p.location ? `lokasi: ${p.location}` : null,
+      p.audienceSize ? `jumlah peserta: ${p.audienceSize}` : null,
+      p.specialization ? `bidang: ${p.specialization}` : null,
+    ].filter(Boolean);
+    return parts.length > 0
+      ? `KONTEKS BOOKING TERKINI (ANGKA INI FINAL, JANGAN DIUBAH):\n${parts.join("; ")}\n\n`
+      : "";
+  })();
 
   const serverReply = await askServerLLM(
     message,
     context,
     history,
     verifiedRows,
-    { draft: local.text }
+    { draft: bookingContext + local.text }
   );
   if (serverReply) {
     return {
