@@ -280,6 +280,11 @@ function formatList(list: typeof ustadzData, header: string): string {
   );
 }
 
+/** Tautan langsung ke halaman undang untuk satu ustadz. */
+function bookingLinkLine(u: { id: string; title: string; name: string }): string {
+  return `[Undang ${u.title} ${u.name} langsung →](/booking?ustadz=${u.id})`;
+}
+
 /* ---------------------- penyaring lanjutan ---------------------- */
 
 function refinePrevious(message: string, ctx: AgentContext): IntentResult | null {
@@ -329,6 +334,7 @@ function refinePrevious(message: string, ctx: AgentContext): IntentResult | null
   return {
     text:
       formatList(top, `Baik, hasil sebelumnya saya ${label}:`) +
+      (top[0] ? `\n\n${bookingLinkLine(top[0])}` : "") +
       `\n\nMau saya lanjutkan ke undangan untuk salah satu dari mereka?`,
     action: "search",
     data: { list: top, text: "" },
@@ -595,11 +601,23 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
 
   /* 4b. Penjelasan alur booking — bukan permintaan booking */
   if (
-    /(cara|bagaimana|gimana|proses|alur|tahapan?)\s+(booking|pesan|memesan|undang)/i.test(
+    /(cara|bagaimana|gimana|proses|alur|tahapan?)\s+\S*(booking|pesan|memesan|undang|invite)/i.test(
       message
     ) ||
     /(booking|pesan)\s+(itu\s+)?(bagaimana|gimana|cara)/i.test(message)
   ) {
+    const howToTail = (() => {
+      const lastId = ctx.lastUstadzIds?.[0];
+      const last = lastId ? ustadzData.find((u) => u.id === lastId) : undefined;
+      if (last) {
+        return (
+          `\n\nKalau yang tadi saya rekomendasikan sudah pas, undang langsung dari halaman jadwalnya:\n` +
+          bookingLinkLine(last)
+        );
+      }
+      return `\n\nBelum ada ustadz yang dipilih? Cari dulu di direktori: [Buka Direktori Ustadz →](/ustadz)`;
+    })();
+
     return {
       text:
         `Alurnya empat langkah, dan langkah terakhir selalu Anda yang putuskan:\n\n` +
@@ -608,7 +626,8 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
         `3. Saya susun rencana undangan dan tampilkan sumbernya (rating, pengalaman)\n` +
         `4. Anda menyetujui — baru permintaan diteruskan ke ustadz\n\n` +
         `Tidak ada undangan yang berjalan tanpa persetujuan Anda. ` +
-        `Mau saya bantu susun rencananya sekarang?`,
+        `Mau saya bantu susun rencananya sekarang?` +
+        howToTail,
       action: "info",
       context: { ...ctx, turn: ctx.turn + 1, lastAction: "how_to_book" },
     };
@@ -717,6 +736,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
     return {
       text:
         formatList(top, `Berikut ${top.length} ustadz yang paling sesuai:`) +
+        (top[0] ? `\n\n${bookingLinkLine(top[0])}` : "") +
         `\n\n${notes.join(" ")}\n\nMau saya susun rencana undangan untuk salah satu dari mereka?`,
       action: "recommend",
       data: { list: top, text: "" },
@@ -895,6 +915,7 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
               : `Saya menemukan ${list.length} ustadz yang sesuai:`
           ) +
           priceLine +
+          (top[0] ? `\n\n${bookingLinkLine(top[0])}` : "") +
           `\n\nMau saya buatkan rencana undangan untuk salah satu dari mereka?`,
         action: "search",
         data: { list: top, text: "" },

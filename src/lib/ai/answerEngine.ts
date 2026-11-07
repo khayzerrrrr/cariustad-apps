@@ -64,6 +64,19 @@ function toChatTurns(
   return history.slice(-8).map((h) => ({ role: h.role, content: h.content }));
 }
 
+/**
+ * LLM tidak pernah tahu ID internal ustadz, jadi jawabannya tidak bisa
+ * memuat tautan ke halaman booking. Mesin lokal sudah menyusun tautan
+ * itu dengan benar — pastikan tautan internal dari teks lokal tetap ada
+ * di jawaban akhir, tanpa menduplikasi yang sudah ditulis LLM.
+ */
+function ensureLinks(llmReply: string, localText: string): string {
+  const links = localText.match(/\[[^\]]+\]\(\/[^)]+\)/g) ?? [];
+  const missing = links.filter((l) => !llmReply.includes(l));
+  if (missing.length === 0) return llmReply;
+  return `${llmReply.trim()}\n\n${missing.join("\n")}`;
+}
+
 /** Validasi jawaban model sebelum ditampilkan. */
 function validateLLMAnswer(
   raw: string,
@@ -242,7 +255,7 @@ export async function answer(
   );
   if (serverReply) {
     return {
-      reply: serverReply.reply,
+      reply: ensureLinks(serverReply.reply, local.text),
       action: local.action,
       context: local.context ?? { ...context, turn: context.turn + 1 },
       provider: serverReply.provider,
@@ -265,7 +278,7 @@ export async function answer(
       const checked = validateLLMAnswer(raw, context);
       if (checked.ok) {
         return {
-          reply: checked.text,
+          reply: ensureLinks(checked.text, local.text),
           action: local.action,
           context: local.context ?? { ...context, turn: context.turn + 1 },
           provider: "workbuddy",
