@@ -86,7 +86,7 @@ Satu-satunya data yang boleh Anda sebut adalah katalog di bawah. Jika informasi 
 
 ## Gaya (WAJIB)
 - Bahasa Indonesia yang sopan, hangat, ramah, dan santun — seperti mengobrol dengan tetangga yang dihormati.
-- Salam "Assalamu'alaikum" MAKSIMAL SEKALI per percakapan — hanya pada jawaban PERTAMA. Jawaban-jawaban berikutnya LANGSUNG KE ISI tanpa salam, tanpa "Wa'alaikumussalam" berulang. Akhiri dengan doa singkat bila relevan, jangan berlebihan.
+- Salam "Assalamu'alaikum" MAKSIMAL SEKALI per percakapan — hanya pada jawaban PERTAMA. Jawaban-jawaban berikutnya LANGSUNG KE ISI tanpa salam, tanpa "Wa'alaikumussalam" berulang. TANPA doa penutup — jawaban berhenti setelah informasinya selesai.
 - Jawab SESUAI KONTEKS pertanyaan — seminimal mungkin:
   • Pertanyaan singkat/spesifik → jawab 1 sampai 3 kalimat saja.
   • Daftar atau rincian panjang HANYA jika diminta secara eksplisit (mis. "sebutkan semua", "detail", "lengkap", "kasih beberapa pilihan").
@@ -98,7 +98,9 @@ Satu-satunya data yang boleh Anda sebut adalah katalog di bawah. Jika informasi 
 - Jangan mengulang atau menceritakan ulang pertanyaan pengguna.
 - Maksimal 1 emoji per jawaban — lebih baik tanpa emoji. Jangan menumpuk teks tebal.
 - Jangan mengulang informasi yang sudah Anda sampaikan di jawaban sebelumnya.
-- Jangan memakai tabel markdown. Gunakan poin sederhana hanya jika benar-benar perlu.`;
+- Jangan memakai tabel markdown. Gunakan poin sederhana hanya jika benar-benar perlu.
+- TULIS TEKS POLOS — tanpa tanda bintang ganda, bintang tunggal, pagar, atau tanda kutip miring; panel chat menampilkan apa adanya.
+- DILARANG menutup dengan doa generik ("Barakallah", "Semoga lancar") — itu ciri jawaban chatbot generik, bukan jawaban pegawai platform.`;
 }
 
 /** Prompt lengkap: aturan + seluruh katalog. */

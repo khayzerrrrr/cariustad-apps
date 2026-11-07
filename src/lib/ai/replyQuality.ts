@@ -37,17 +37,41 @@ const SLOP_REJECT_PATTERNS = [
 
 /** Pembuka basa-basi yang dibuang dari awal jawaban. */
 const SLOP_OPENER_PATTERNS = [
-  /^\s*(tentu|baik|siap|wah|oke|ok|alright|sure|certainly|great|good question|pertanyaan (yang )?bagus)[!,.]\s*/i,
+  /^\s*(tentu|baik|siap|wah|oke|ok|alright|sure|certainly|great|good question|pertanyaan (yang )?bagus|menarik|wow|bagus sekali)[!,.]\s*/i,
+  /^\s*(terima kasih (sudah|telah|atas)|thanks (for|you for)|dengan senang hati)[^.!?]*[.!:]\s*/i,
+  /^\s*(tentu saja|dengan senang hati)[!,.]\s*/i,
 ];
 
 /** Penutup klise yang dibuang dari akhir jawaban. */
 const SLOP_CLOSER_PATTERNS = [
-  /\s*(semoga (membantu|bermanfaat))[!.]?\s*$/i,
-  /\s*(jika|kalau) ada (pertanyaan|hal) lain[^.]*[!.]?\s*$/i,
-  /\s*jangan ragu (untuk )?(menghubungi|bertanya)[^.]*[!.]?\s*$/i,
-  /\s*apakah ada (yang )?(bisa|dapat) saya bantu (lagi|lainnya)[^.?]*[!.?]\s*$/i,
-  /\s*(feel free to ask|hope this helps)[^.]*[!.]?\s*$/i,
+  // "Semoga ..." di kalimat terakhir: "Semoga membantu.", "Semoga prosesnya
+  // lancar.", "Semoga membantu menemukan ustadz yang tepat." — semua varian.
+  /\s*semoga\s+[^.!?]*[.!?]?\s*$/i,
+  /\s*jangan (ragu|sungkan) (untuk )?(menghubungi|bertanya|memilih)[^.!?]*[.!?]?\s*$/i,
+  /\s*(jika|kalau) ada (pertanyaan|hal|yang) lain[^.!?]*[.!?]?\s*$/i,
+  /\s*ada yang (bisa|dapat|ingin|bisa saya) bantu[^.!?]*[.!?]?\s*$/i,
+  /\s*apakah ada (yang )?(bisa|dapat) saya bantu[^.!?]*\??\s*$/i,
+  /\s*(feel free to|hope this helps|let me know if)[^.!?]*[.!?]?\s*$/i,
+  /\s*saya siap membantu[^.!?]*[.!?]?\s*$/i,
+  /\s*selamat mencoba[!.]?\s*$/i,
+  // Doa penutup generik ala chatbot — bukan materi dalil (dalil dijawab
+  // deterministik dari dataset, bukan lewat jalur LLM ini).
+  /\s*barakallahu\s*fii[km]*[^.!?]*[.!?]?\s*$/i,
+  /\s*barakallah\s*(?![a-z])[^.!?]*[.!?]?\s*$/i,
+  /\s*wallahu\s+a'?lam[!.]?\s*$/i,
 ];
+
+/**
+ * Buang dekorasi markdown. Panel transkrip hanya merender tautan
+ * [label](url) — tanda **, *, #, dan ` tampil mentah dan jadi noise.
+ */
+function stripMarkdownDecorations(text: string): string {
+  return text
+    .replace(/\*\*([^*\n]+)\*\*/g, "$1") // **tebal**
+    .replace(/(^|[\s(])\*([^*\n]+)\*/g, "$1$2") // *miring*
+    .replace(/^#{1,6}\s+/gm, "") // heading
+    .replace(/`([^`\n]+)`/g, "$1"); // kode
+}
 
 /** Kata fungsi bahasa Inggris — dipakai mengukur apakah jawaban berbahasa Indonesia. */
 const ENGLISH_STOPWORDS =
@@ -79,8 +103,8 @@ export function looksLikeReasoningLeak(text: string): boolean {
  * penolakan. Idempoten — aman dipanggil dua kali.
  */
 export function cleanSlop(text: string): string {
-  let out = text.trim();
-  for (let i = 0; i < 3; i++) {
+  let out = stripMarkdownDecorations(text.trim());
+  for (let i = 0; i < 4; i++) {
     const before = out;
     for (const re of SLOP_OPENER_PATTERNS) out = out.replace(re, "");
     for (const re of SLOP_CLOSER_PATTERNS) out = out.replace(re, "");
