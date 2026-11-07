@@ -206,9 +206,125 @@ zoom-in saat jawaban agen muncul.
 
 - [ ] Generate S1-S4, S6, S7 (masing-masing 2-3 varian, pilih terbaik)
 - [ ] Cek setiap klip: tidak ada teks terbaca, tidak ada wajah aneh, palet emerald-emas konsisten
+- [ ] Generate varian green screen: S8, S9 (layar HP chroma key)
 - [ ] Rekam R1-R8 sesuai SKRIP_VIDEO_DEMO.md (segmen per segmen)
+- [ ] Rekam layar mobile (RM1, RM2) — 9:16, device mode 375px atau HP asli
 - [ ] Rekam voiceover penuh dalam satu take (lebih konsisten tempo) — ikuti narasi skrip
 - [ ] Rakit di CapCut/DaVinci: kartu teks → Veo b-roll → layar asli, sesuai peta di atas
+- [ ] Chroma key layar hijau → sisip rekaman mobile (panduan: bagian bawah)
 - [ ] Overlay teks di momen kunci (daftar lengkap ada di skrip)
 - [ ] Musik instrumental 10-15%, fade out 15 detik terakhir
 - [ ] Ekspor MP4 H.264 1080p ≥ 8 Mbps → `cariustad-demo.mp4`, durasi final 6-7 menit
+
+---
+
+# LAYAR HP GREEN SCREEN — untuk sisip video asli
+
+Kebutuhan Reza: klip Veo berisi HP dengan **layar chroma key hijau polos**,
+lalu video asli website (mode mobile) disisipkan ke layar itu di editor.
+
+## Dua catatan penting sebelum generate
+
+1. **Veo tidak dijamin menghasilkan hijau chroma murni (#00FF00)** — kadang
+   hasilnya hijau dengan gradasi/reflect. Solusi di bawah ada dua jalur:
+   (A) chroma key langsung, (B) fallback *planar track* di layar gelap.
+2. **Rekam video mobile-nya dalam rasio 9:16 vertikal** — nanti di-"corner-pin"
+   mengikuti sudut layar HP di klip Veo. Rekam via **DevTools device mode 375px**
+   (Chrome → F12 → Ctrl+Shift+M → pilih iPhone SE / 375×812) atau layar HP asli
+   dengan perekam layar. Yang direkam: halaman `/` dan `/asisten` versi mobile.
+
+---
+
+## SCENE S8 — Takmir membuka HP di aula masjid (green screen)
+
+**Posisi saran:** segmen 2 (perkenalan) atau pembuka segmen 4 — "cukup dari ponsel".
+
+```
+Medium shot, slight handheld feel: an Indonesian mosque caretaker (takmir, seen
+from behind at three-quarter angle, face not visible) sits alone in a quiet mosque
+hall and lifts a smartphone, holding it steady in front of him. The phone screen
+is a completely uniform bright chroma-key green (#00FF00), perfectly flat, matte,
+no reflections, no glare, no content on the screen, edges of the screen sharp and
+clean. Warm tungsten lamp light from the side, cool window light behind. Ambient
+room tone only, no voices. Warm cinematic realism, emerald and golden color
+palette, shallow depth of field, 35mm film look. No text anywhere, no captions,
+no watermark. 16:9.
+```
+
+**Durasi saran di timeline:** 6-8 dtk. Kamera harus seminimal mungkin bergerak —
+kalau kamera goyang kuat, tracking layar lebih susah. Kalau hasil HP-nya miring
+terus, regenerate dengan tambahan: `the phone is held perfectly vertical and still`.
+
+---
+
+## SCENE S9 — Close-up scroll di HP (green screen)
+
+**Posisi saran:** segmen 4 — pengganti/m pelengkap rekaman desktop; kesan
+"takmir mengerjakan dari HP di sela pekerjaan".
+
+```
+Extreme close-up over-the-shoulder shot: one hand holds a smartphone steady,
+the thumb performs a single slow swipe upward on the screen. The screen is a
+completely uniform bright chroma-key green (#00FF00) — flat, matte, no reflection,
+no smudge, sharp screen edges, no content. Blurred warm mosque interior in the
+background bokeh. Ambient tone only, no voices. Warm cinematic realism, emerald
+and golden color palette, very shallow depth of field, 35mm film look. No text,
+no captions, no watermark. 16:9.
+```
+
+**Catatan:** thumb yang men-swipe harus selaras dengan konten yang kamu sisip
+(kalau video aslimu juga scroll ke atas — cocok; kalau tidak, ambil varian
+`the thumb taps once on the screen and holds still`).
+
+---
+
+## SCENE S10 — OPSIONAL: HP bersandar di meja rapat (green screen)
+
+Alternatif tanpa tangan sama sekali — paling mudah di-key karena nol motion:
+
+```
+Static locked-off close-up: a smartphone stands leaning against a closed notebook
+on a wooden table in a quiet mosque office, screen facing the camera, filling a
+good portion of the frame. The screen is a completely uniform bright chroma-key
+green (#00FF00), flat, matte, no reflections, sharp edges, no content. Dust motes
+in warm lamp light, soft blurred bookshelf background. Ambient room tone, no
+voices. Warm cinematic realism, emerald and golden palette, shallow depth of
+field, 35mm film look. No text, no captions, no watermark. 16:9.
+```
+
+---
+
+## Panduan sisip video asli (chroma key)
+
+**CapCut (tercepat):**
+1. Taruh klip Veo di track utama.
+2. Video mobile 9:16 di track di atasnya, ukurannya disamakan dengan layar HP.
+3. Pilih klip Veo → **Chroma key** → pipet warna hijau di tengah layar →
+   **Intensity** naikkan pelan sampai hijau hilang bersih → **Shadow** sedikit
+   untuk rambat tepi.
+4. **Corner-pin:** Tarik sudut video mobile sampai pas dengan 4 sudut layar HP.
+   CapCut tidak punya corner-pin presisi — kalau HP-nya miring, pakai rotate +
+   scale, atau pindah ke DaVinci.
+5. Turunkan opacity video mobile ke ~92% + tambah **noise/grain tipis** — supaya
+   menyatu dengan film look klip Veo, tidak terkesan "tempelan".
+
+**DaVinci Resolve (paling rapi):**
+1. Fusion page → **Tracker** (planar) di area layar → Track.
+2. MediaOut: **Corner Pin** video mobile ke 4 titik hasil tracker.
+3. Kembali ke Edit page → **3D Keyer / HSL** untuk sisa hijau di tepi →
+   **Choker** sedikit untuk rapikan tepi.
+4. Grade: samakan suhu warna video mobile dengan klip (sedikit hangat + grain).
+
+**Jalur B — kalau hijau Veo kotor (gradasi/reflect):**
+Jangan kejar chroma key. Rekam versi klip yang sama tapi minta
+`the screen is a solid dark blank gray screen` — lalu di DaVinci pakai planar
+tracker + corner pin saja (tanpa keying). Metode ini justru yang dipakai studio
+untuk screen replacement.
+
+**Jangan lupa di video mobile yang disisip:**
+- Zoom browser 100% (teks chat di 375px sudah cukup besar)
+- Mulai dari sapaan avatar, scroll pelan
+- Matikan notifikasi HP sebelum merekam
+- Sisipkan 1-2 dtk "jeda hidup" di awal klip (HP masih di gelapkan tangan)
+  biar transisinya natural
+
