@@ -30,7 +30,6 @@ import Reveal from "@/components/motion/Reveal";
 import StaggerShaf from "@/components/motion/StaggerShaf";
 import CountUp from "@/components/motion/CountUp";
 import WordReveal from "@/components/motion/WordReveal";
-import AgentFlowScroll from "@/components/motion/AgentFlowScroll";
 
 const steps = [
   {
@@ -248,9 +247,6 @@ export default function HomePage() {
           ))}
         </StaggerShaf>
       </section>
-
-      {/* SIGNATURE: Alur agen 11 langkah — pin + scrub */}
-      <AgentFlowScroll />
 
       {/* AI Assistant CTA */}
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
