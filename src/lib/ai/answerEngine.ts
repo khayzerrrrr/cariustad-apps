@@ -43,17 +43,16 @@ export interface AnswerResult {
 const KNOWN_NAMES = ustadzData.map((u) => u.name);
 
 /**
- * Aksi yang teksnya WAJIB dari mesin lokal.
- * Rencana booking butuh format baku dan angka yang persis; profil memuat
- * jadwal asli; penolakan dan permintaan klarifikasi harus deterministik.
- * Menyerahkannya ke LLM berisiko mengubah detail yang harus tepat.
+ * Aksi yang teksnya WAJIB dari mesin lokal — hanya transaksi dan penolakan
+ * yang harus deterministik: konfirmasi/pembatalan booking adalah kejadian
+ * tercatat, dan blokir/penolakan batas domain tidak boleh dinegosiasikan
+ * model. Selebihnya — termasuk rencana booking dan klarifikasi — mesin
+ * lokal tetap menghitung data terverifikasinya (siapa ustadznya, link
+ * undang, peringatan waktu), lalu MODEL yang menuliskan jawabannya.
  */
 const LOCAL_ONLY_ACTIONS = new Set<string>([
-  "booking_plan",
   "booking_confirmed",
   "booking_cancelled",
-  "profile",
-  "clarify",
   "blocked",
   "refused",
 ]);
@@ -139,7 +138,7 @@ async function askServerLLM(
   ctx: AgentContext,
   history: Array<{ role: "user" | "assistant"; content: string }>,
   verified?: string,
-  extra?: { mode?: string; verifiedDalil?: string }
+  extra?: { mode?: string; verifiedDalil?: string; draft?: string }
 ): Promise<{ reply: string; provider: AnswerProvider } | null> {
   try {
     const res = await fetch("/api/llm", {
@@ -151,6 +150,7 @@ async function askServerLLM(
         bookingConfirmed: ctx.lastAction === "booking_confirmed",
         verified: extra?.verifiedDalil ?? verified,
         mode: extra?.mode,
+        draft: extra?.draft,
       }),
     });
     if (!res.ok) return null;
@@ -242,7 +242,10 @@ export async function answer(
     return fromLocal();
   }
 
-  /* 3. Jalur LLM server: DeepSeek → cadangan OpenRouter */
+  /* 3. Jalur LLM server: DeepSeek → cadangan OpenRouter.
+     Mesin lokal sudah menghitung data terverifikasi (kandidat ustadz,
+     link undang, peringatan waktu) — dikirim sebagai draf agar model
+     hanya menuliskan ulang, bukan mengarang. */
   const verifiedRows = local.data?.list?.length
     ? formatVerifiedRows(local.data.list)
     : undefined;
@@ -251,7 +254,8 @@ export async function answer(
     message,
     context,
     history,
-    verifiedRows
+    verifiedRows,
+    { draft: local.text }
   );
   if (serverReply) {
     return {

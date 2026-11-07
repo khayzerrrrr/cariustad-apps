@@ -4,8 +4,13 @@
  */
 
 export interface CulturalCheckResult {
+  /** true = boleh lanjut. Hanya konflik keras yang memblokir. */
   passed: boolean;
+  /** Konflik keras — memblokir penjadwalan (contoh: Salat Jumat). */
   conflicts: string[];
+  /** Konflik lunak — hanya peringatan, kajian tetap bisa berjalan
+      (contoh: jeda untuk salat ashar di tengah acara). */
+  warnings: string[];
   suggestions: string[];
 }
 
@@ -84,9 +89,10 @@ export function checkCulturalRules(params: {
   message: string;
 }): CulturalCheckResult {
   const conflicts: string[] = [];
+  const warnings: string[] = [];
   const suggestions: string[] = [];
 
-  // 1. Salat Jumat conflict
+  // 1. Salat Jumat conflict — konflik keras, memblokir
   if (params.day && params.startTime) {
     if (checkSalatJumatConflict(params.day, params.startTime)) {
       conflicts.push("Waktu yang diminta bertepatan dengan Salat Jumat (Jumat 11:30-13:00 WIB)");
@@ -94,11 +100,14 @@ export function checkCulturalRules(params: {
     }
   }
 
-  // 2. Prayer time conflict
+  // 2. Prayer time conflict — konflik lunak. Kajian tetap bisa berjalan
+  //    dengan jeda salat; menolak keras justru membuat alur booking macet.
   if (params.startTime && params.endTime) {
     const prayerConflicts = checkPrayerTimeConflict(params.startTime, params.endTime);
     for (const p of prayerConflicts) {
-      conflicts.push(`Waktu bertepatan dengan salat ${p}`);
+      warnings.push(
+        `Waktu acara melewati salat ${p} — rencanakan jeda salat sekitar ${DEFAULT_PRAYER_TIMES[p as keyof typeof DEFAULT_PRAYER_TIMES]} WIB`
+      );
       suggestions.push(`Saran: jeda 15 menit setelah salat ${p}`);
     }
   }
@@ -112,15 +121,20 @@ export function checkCulturalRules(params: {
   return {
     passed: conflicts.length === 0,
     conflicts,
+    warnings,
     suggestions,
   };
 }
 
-/** Get suggested alternative time slots avoiding prayer times */
+/** Get suggested alternative time slots avoiding prayer times.
+    Label menyesuaikan hari — "Salat Jumat" hanya relevan hari Jumat. */
 export function suggestAlternativeTimes(day: string): string[] {
+  const isFriday = day.toLowerCase() === "jumat";
   return [
     "08:00 - 10:00 (sebelum Dzuhur)",
-    "13:30 - 15:00 (setelah Salat Jumat / Dzuhur)",
+    isFriday
+      ? "13:30 - 15:00 (setelah Salat Jumat)"
+      : "13:30 - 15:00 (setelah Dzuhur)",
     "16:00 - 17:45 (setelah Ashar, sebelum Maghrib)",
     "19:30 - 21:00 (setelah Isya)",
   ];

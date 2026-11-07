@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
     bookingConfirmed?: boolean;
     verified?: string;
     mode?: string;
+    draft?: string;
   };
 
   try {
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
      * sendiri, sehingga tidak mungkin memasukkan ustadz dari kota lain.
      */
     const verified = (body.verified ?? "").slice(0, 4000).trim();
+    const draft = (body.draft ?? "").slice(0, 3000).trim();
     let systemPrompt: string;
     if (hafizhMode) {
       // Mode Ustadz Hafizh: kutipan terkunci pada dalil terverifikasi.
@@ -109,6 +111,27 @@ ATURAN DATA:
 - Sebutkan kota/area apa adanya; jangan memindahkan ustadz ke kota lain.`;
     } else {
       systemPrompt = buildGroundedSystemPrompt();
+    }
+
+    /**
+     * Draf jawaban dari mesin lokal: berisi keputusan struktural yang sudah
+     * final — siapa ustadz yang direkomendasikan, urutan pilihan, link
+     * undang, dan peringatan waktu salat. Model hanya menuliskan ulang
+     * dengan bahasa yang mengalir; substansinya tidak boleh berubah.
+     */
+    if (draft && !hafizhMode) {
+      systemPrompt += `
+
+=== DRAF JAWABAN SISTEM (SUDAH DIVERIFIKASI, FINAL) ===
+${draft}
+
+ATURAN DRAF:
+- Tulis ulang draf di atas dengan bahasa yang natural dan mengalir — bukan sekadar menyalin.
+- JANGAN mengubah: nama ustadz, urutan pilihan, angka (rating, biaya, jam), hari, kota, atau jumlah peserta.
+- Pertahankan SEMUA tautan berformat [teks](/path) persis seperti aslinya. Tautan undangan adalah bagian wajib dari jawaban — pengguna harus selalu tahu cara melanjutkan booking.
+- Pertahankan semua peringatan (waktu salat, Salat Jumat, ketersediaan) — jangan dihaluskan sampai hilang maknanya.
+- Jangan menambah ustadz, angka, atau janji yang tidak ada di draf atau data terverifikasi.
+- Bila draf berisi pertanyaan klarifikasi, akhiri dengan pertanyaan itu.`;
     }
 
     const result = await generateReply({

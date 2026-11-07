@@ -446,7 +446,17 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
       parsedBooking: parsed,
       culturalWarnings: cultural.conflicts,
       auditMeta: { culturalConflicts: cultural.conflicts },
-      context: { ...ctx, turn: ctx.turn + 1, lastAction: "cultural_check" },
+      /* Draf booking WAJIB dibawa: tanpa ini, jawaban lanjutan seperti
+         "baik di jam 13.30 saja" kehilangan konteks (kota, hari, jumlah
+         peserta) dan jatuh ke fallback. lastAction "clarify" agar langkah
+         0b tetap menangkap jawaban klarifikasi berikutnya. */
+      context: {
+        ...ctx,
+        turn: ctx.turn + 1,
+        lastAction: "clarify",
+        pendingBooking: parsed,
+        pendingClarify: "time",
+      },
     };
   }
 
@@ -523,6 +533,9 @@ function processBookingRequest(message: string, ctx: AgentContext): IntentResult
   } else {
     text = formatBookingPlan(parsed, ustadzName);
   }
+  if (cultural.warnings.length > 0) {
+    text += `\n\nCatatan waktu: ${cultural.warnings.join("; ")}`;
+  }
   if (cultural.suggestions.length > 0) {
     text += `\n\nCatatan: ${cultural.suggestions.join(", ")}`;
   }
@@ -571,8 +584,17 @@ export function matchIntent(message: string, context?: AgentContext): IntentResu
 
   /* 0b. Lanjutan klarifikasi booking — jawaban pendek seperti "di Bandung"
      atau "Sabtu jam 20:00" tidak mengandung kata booking, tetapi harus
-     tetap masuk alur booking yang sedang berjalan. */
-  if (ctx.lastAction === "clarify" && ctx.pendingBooking) {
+     tetap masuk alur booking yang sedang berjalan. Berlaku juga saat agent
+     sudah menampilkan rencana (booking_plan) atau baru saja menolak waktu
+     (cultural_check): pengguna bisa menjawab dengan jam baru, mis.
+     "baik di jam 13.30 saja", dan alur TIDAK boleh putus. Pesan tanpa
+     data baru (mis. "setuju") lolos ke langkah konfirmasi di bawah. */
+  if (
+    (ctx.lastAction === "clarify" ||
+      ctx.lastAction === "cultural_check" ||
+      ctx.lastAction === "booking_plan") &&
+    ctx.pendingBooking
+  ) {
     const fresh = parseBookingRequest(message);
     const hasNew = Boolean(
       fresh.city ||
