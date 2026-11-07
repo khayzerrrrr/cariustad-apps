@@ -100,14 +100,21 @@ ke layar — kontras "masalah nyata vs dunia digital").
 
 ## SHOT 5 — 0:40–0:48 · Jembatan transisi (tanpa narasi)
 
-**Visual:** klip Veo **S4** (cahaya pagi menembus kisi geometris islami, pola
-emerald-emas meluncur di meja putih). **Tanpa narasi sama sekali** — hanya musik
-yang naik tipis + ambience. Ini jeda napas sebelum produk muncul.
+**Visual, dua opsi:**
 
-**Editing:** **KUNCI transisi paling penting di seluruh video:** akhir klip S4
-di-crossfade 0,5 dtk ke layar asli `/` (hero website). Pola geometris islami di
-kisi jendela harus terasa "nyambung" dengan pola hero — kalau hasil generate S4
-pola kisi-nya tidak mirip, regenerate sampai dapat.
+- **Opsi A — klip Veo S11 (DISARANKAN):** momen penemuan — takmir lelah mengangkat
+  HP, wajahnya berubah lega, glow emerald-emas menyapu wajah. Prompt lengkap +
+  varian green screen + catatan khusus Google Flow: lihat **SCENE S11** di
+  `VEO_SCENES.md`. Narasi opsional satu kalimat: *"Sampai malam itu, ia
+  menemukan cara lain."*
+- **Opsi B — klip Veo S4 (tanpa orang):** cahaya pagi menembus kisi geometris
+  islami. **Tanpa narasi sama sekali** — hanya musik yang naik tipis + ambience.
+
+**Editing:** **KUNCI transisi paling penting di seluruh video:** akhir klip
+(Opsi A: detik terakhir saat glow menguat; Opsi B: akhir klip) di-crossfade
+0,5 dtk ke layar asli `/` (hero website). Pola geometris islami di kisi jendela
+harus terasa "nyambung" dengan pola hero — kalau hasil generate S4 pola kisi-nya
+tidak mirip, regenerate sampai dapat.
 
 ---
 
@@ -175,7 +182,9 @@ layar hijau) sebagai Shot 4b — antara Shot 4 dan Shot 5:
 
 - [ ] Generate Veo S1, S2, S3, S4 (2–3 varian masing-masing; cek: tak ada teks
       terbaca, tak ada wajah aneh, palet emerald-emas konsisten)
-- [ ] (Opsional) Generate S8 green screen
+- [ ] Generate **S11** (momen penemuan — 3–4 varian, rasio gagal tertinggi karena
+      wajah & emosi; cek transisi lelah→leg gradual, tangan wajar, HP tanpa teks)
+- [ ] (Opsional) Generate S8 green screen + S11-GS (penemuan dengan layar hijau)
 - [ ] Rekam **R1**: `/ustadz` scroll + ganti-ganti filter kota, ±30 dtk
 - [ ] Rekam **R2**: `/` home scroll pelan hero → bawah, ±35 dtk, SATU file
       (dipakai Shot 6 & 7 sekaligus)

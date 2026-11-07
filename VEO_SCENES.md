@@ -180,6 +180,102 @@ Musik fade out mulai detik ini.
 
 ---
 
+# SCENE S11 — MOMEN PENEMUAN: takmir menemukan solusi
+
+Kebutuhan Reza: shot "orang yang akhirnya menemukan solusinya" — jembatan
+emosi antara hook (masalah) dan perkenalan produk. Ini satu-satunya klip di
+paket ini yang boleh menampilkan wajah, karena ia klip tunggal (aturan
+konsistensi antar-klip tidak berlaku di dalam satu generate).
+
+**Posisi saran di timeline (dua opsi):**
+
+- **Opsi A (pengganti Shot 5):** langsung jadi jembatan 0:40–0:48 — masalah →
+  wajah berubah lega → cut ke home CariUstadz. Paling sederhana.
+- **Opsi B (dua beat):** S4 (cahaya kisi, tanpa narasi, 4 dtk di editor) →
+  S11 (penemuan, 6 dtk) → cut ke home. Lebih sinematik, total jembatan 0:40–0:52.
+
+**Narasi opsional** (kalau mau jembatan berbicara; kalau tidak, biarkan senyap
+sesuai skrip induk):
+
+> Sampai malam itu, ia menemukan cara lain.
+
+---
+
+## S11 — versi utama (wajib generate)
+
+**Prompt Veo (salin penuh):**
+
+```
+Medium close-up, slow gentle push-in: an Indonesian mosque caretaker (takmir,
+middle-aged, wearing a simple dark shirt and a black peci cap) sits alone at a
+wooden desk in a quiet mosque office at night, visibly tired after a long day.
+He picks up his smartphone and looks at it; his expression slowly shifts from
+weary frustration to quiet relief, and a small hopeful smile forms — as if he
+has finally found the answer to his problem. A soft emerald-golden glow from
+the phone screen washes gently over his face, replacing the dim tungsten desk
+lamp light. Warm cinematic realism, emerald and golden color palette, shallow
+depth of field, 35mm film look. The phone screen content is soft blurred glow
+only — no readable text, no captions, no watermark, no dialogue, ambient room
+tone only. 16:9.
+```
+
+**Yang wajib dicek di hasil generate:**
+
+- [ ] Transisi wajah: lelah → lega → senyum tipis (kalau berubah mendadak/kaku,
+      regenerate dengan tambahan `the emotional shift is gradual and subtle`)
+- [ ] Tangan & peci wajar (Veo sering gagal di tangan — kalau 6 jari, regenerate)
+- [ ] Wajah TIDAK menampilkan teks terbaca di HP — kalau huruf kelihatan jelas,
+      regenerate dengan `the screen is nothing but a soft out-of-focus glow`
+- [ ] Glow emerald-emas di wajah terlihat (ini yang menghubungkan visual ke palet website)
+
+---
+
+## S11-GS — varian green screen (HP bisa disisip website asli)
+
+Bila ingin layar HP-nya benar-benar menampilkan CariUstadz (bukan sekadar glow):
+
+```
+Medium close-up, slow gentle push-in: an Indonesian mosque caretaker (takmir,
+middle-aged, wearing a simple dark shirt and a black peci cap) sits alone at a
+wooden desk in a quiet mosque office at night. He lifts a smartphone and holds
+it steady in front of him, looking at it with growing relief and a small
+hopeful smile — as if he has finally found the answer. The phone screen is a
+completely uniform bright chroma-key green (#00FF00), perfectly flat, matte,
+no reflections, sharp screen edges, no content. Warm tungsten desk lamp,
+cool window light behind. Warm cinematic realism, emerald and golden color
+palette, shallow depth of field, 35mm film look. No text anywhere, no captions,
+no watermark, no dialogue, ambient room tone only. 16:9.
+```
+
+**Penyisipan:** rekaman mobile 9:16 halaman `/` (RM1) di-corner-pin ke layar
+HP lewat chroma key — panduan lengkap di bagian "LAYAR HP GREEN SCREEN" bawah.
+Kamera push-in pelan membuat tracking sedikit lebih susah daripada S8/S10;
+kalau hasil key-nya bergerigi, regenerate dengan
+`the camera is completely static and locked off` lalu pakai corner-pin statis.
+
+---
+
+## Catatan khusus Google Flow
+
+1. **Masuk via Text to Video**, tempel prompt utuh di atas — Flow mengikuti
+   prompt bahasa Inggris paling presisi.
+2. **Konsistensi karakter (opsional):** kalau sudah punya klip S8 (takmir dari
+   belakang) dan mau wajah/kostum S11 "terasa orang yang sama", pakai fitur
+   **Ingredients**: jadikan frame dari S8 sebagai bahan referensi + prompt S11.
+   Kalau tidak ada, S11 saja sudah cukup — ia klip tunggal.
+3. **Extend kalau 8 detik kurang:** pakai **Extend** pada klip terbaik untuk
+   memanjangkan beat emosinya — jangan generate ulang dari nol (wajah akan
+   berbeda).
+4. **Frames-to-video:** alternatif presisi — buat dulu still frame (misal dari
+   S8, ujungnya takmir mengangkat HP) lalu pakai **Frames to Video** dengan
+   prompt S11 sebagai instruksi pergerakannya.
+5. Generate **3–4 varian** untuk scene ini (lebih banyak daripada klip lain) —
+   wajah & emosi adalah area paling lemah Veo; rasio gagal tertinggi di sini.
+6. Di Flow, matikan/pakai audio ambience saja — kalau ada vokal/musik menyusup,
+   mute total di editor; narasi & musik dari timeline utama.
+
+---
+
 ## Daftar rekaman layar yang harus Reza buat sendiri
 
 (ikuti persis `SKRIP_VIDEO_DEMO.md` — ini rekap kebutuhannya)
